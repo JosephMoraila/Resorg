@@ -1,5 +1,7 @@
-use crate::db::obtener_conexion_db;
-use rusqlite::{Connection, ToSql};
+use crate::db::{obtener_conexion_db, Platillo, get_platillos_by_category_id};
+use rusqlite::{Connection, ToSql, ErrorCode};
+use serde::{Deserialize, Serialize};
+
 
 
 #[tauri::command]
@@ -7,28 +9,68 @@ use rusqlite::{Connection, ToSql};
 ///
 /// # Argumentos
 ///
-/// * `app` - Manejador de la aplicación de Tauri (`&AppHandle`).
 /// * `name` - Nombre de la nueva categoría a registrar.
 ///
 /// # Retorno
 ///
-/// Retorna `Ok(i64)` con el ID generado automáticamente para la categoría recién insertada.
+/// Retorna `Ok(u64)` con el ID generado automáticamente para la categoría recién insertada.
 ///
 /// # Errors
 ///
-/// Retornará un `Err(String)` en caso de que:
-/// * No se pueda obtener la conexión a la base de datos.
-/// * Ocurra un error al ejecutar la instrucción SQL (por ejemplo, si el nombre viola una restricción de unicidad).
+/// Retornará un `Err(String)` si no se puede obtener la conexión o si falla el INSERT.
 pub fn insert_category_platillo(name: String) -> Result<u64, String> {
     let conn: Connection = obtener_conexion_db()?;
     let comando: &str = "INSERT INTO categories_platillos (name) VALUES(?1);";
-    let parametros: &[&dyn ToSql] = rusqlite::params![name];
-    
-    conn.execute(comando, parametros).map_err(|e: rusqlite::Error| e.to_string())?;
+    let parametros: &[&dyn rusqlite::ToSql] = rusqlite::params![name];
 
-    // Obtener el ID generado por autoincrement
+    conn.execute(comando, parametros).map_err(|e: rusqlite::Error| {
+        if let rusqlite::Error::SqliteFailure(err, _) = &e {
+            if err.code == ErrorCode::ConstraintViolation {
+                return format!("Ya existe una categoría con el nombre '{}'", name);
+            }
+        }
+        e.to_string()
+    })?;
+
     let nuevo_id: i64 = conn.last_insert_rowid();
-    let last_id: u64 = nuevo_id as u64;
+    Ok(nuevo_id as u64)
+}
 
-    Ok(last_id)
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PlatilloCategoria {
+    pub id: u64,
+    pub nombre: String,
+    pub platillos: Vec<Platillo>,
+}
+
+#[tauri::command]
+pub fn get_categories_platillo() -> Result<Vec<PlatilloCategoria>, String> {
+    let conn: Connection = obtener_conexion_db()?;
+    let comando: &str = "SELECT id, name FROM categories_platillos";
+    let mut stmt = conn.prepare(comando).map_err(|e: rusqlite::Error| e.to_string())?;
+
+    // Primero solo sacamos id + nombre de cada categoría, sin anidar otra consulta aquí adentro
+    let categorias_basicas: Vec<(i64, String)> = stmt
+        .query_map((), |row| {
+            let id: i64 = row.get::<&str, i64>("id")?;
+            let nombre: String = row.get::<&str, String>("name")?;
+            Ok((id, nombre))
+        })
+        .map_err(|e: rusqlite::Error| e.to_string())?
+        .filter_map(|fila: Result<(i64, String), rusqlite::Error>| fila.ok())
+        .collect();
+
+    // Ya fuera del closure de query_map, aquí SÍ podemos usar `?` con errores de tipo String
+    // sin ningún conflicto, porque esta función completa devuelve Result<_, String>
+    let mut categorias: Vec<PlatilloCategoria> = Vec::new();
+    for (id, nombre) in categorias_basicas {
+        let platillos: Vec<Platillo> = get_platillos_by_category_id(id as u64)?;
+        categorias.push(PlatilloCategoria {
+            id: id as u64,
+            nombre,
+            platillos,
+        });
+    }
+
+    Ok(categorias)
 }

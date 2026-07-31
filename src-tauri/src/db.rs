@@ -1,5 +1,7 @@
 mod db_category_platillo;
 pub use crate::db::db_category_platillo::*;
+mod db_food_platillo;
+pub use crate::db::db_food_platillo::*;
 
 use crate::path_and_files::{obtener_base_path};
 use std::path::PathBuf;
@@ -22,6 +24,15 @@ pub fn inicializar_tablas()->Result<(), String>{
         CREATE TABLE IF NOT EXISTS categories_platillos (
             id   INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL UNIQUE COLLATE NOCASE
+        );
+
+        CREATE TABLE IF NOT EXISTS food_platillos (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            name        TEXT NOT NULL UNIQUE COLLATE NOCASE,
+            descripcion TEXT,
+            precio      REAL NOT NULL DEFAULT 0.0,
+            category_id INTEGER NOT NULL,
+            FOREIGN KEY (category_id) REFERENCES categories_platillos(id) ON DELETE CASCADE
         );
     ";
 
