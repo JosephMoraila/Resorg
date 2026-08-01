@@ -2,12 +2,21 @@
   import Tree from "$lib/components/tree/Tree.svelte";
   import type { NodoArbol, PlatilloCategoria, Platillo } from "$lib/types";
   import ModalAddName from "$lib/components/modals/ModalAddName.svelte";
+  import ModalAddPlatillo from "$lib/components/modals/ModalAddPlatillo.svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
   import { toast } from "$lib/toast.svelte";
+  import { formatearMoneda } from "$lib/utils/string_utils";
+  import { previewUrlAUint8 } from "$lib/utils/file_utils";
+  import InfoBox from "$lib/components/infobox/InfoBox.svelte";
+  import { obtenerImagenPlatillo } from "$lib/utils/file_utils";
 
   let modalAbiertoCategoria = $state(false);
+  let modalAbiertoAddCategoria = $state(false);
   let selectedNode = $state<string | null>(null);
+  let infoboxAbierto = $state(false);
+  let textoInfoBox = $state("");
+  let imagenInfoBox = $state<string | null>(null);
 
   let nodoPadre: NodoArbol<PlatilloCategoria> = $state({
     id: "cat-0",
@@ -19,8 +28,17 @@
   function platilloANodo(platillo: Platillo): NodoArbol<Platillo> {
     return {
       id: `plat-${platillo.id}`,
-      label: platillo.nombre,
+      label: `${platillo.nombre} - $${formatearMoneda(platillo.precio)}`,
       data: {...platillo, tipo: "platillo"},
+    };
+  }
+
+  function categoriaANodo(categoria: PlatilloCategoria): NodoArbol<PlatilloCategoria> {
+    return {
+      id: `cat-${categoria.id}`,
+      label: categoria.nombre,
+      data: {...categoria, tipo: "categoria"},
+      hijos: categoria.platillos.map(platilloANodo),
     };
   }
 
@@ -29,15 +47,17 @@
       try {
         const categoriasBackend = await invoke<PlatilloCategoria[]>("get_categories_platillo");
 
-        const nuevosHijos: NodoArbol<PlatilloCategoria>[] = categoriasBackend.map((cat) => ({
-          id: `cat-${cat.id}`,
-          label: cat.nombre,
-          data: {tipo: "categoria", id: cat.id, nombre: cat.nombre, platillos: cat.platillos },
-          hijos: cat.platillos.map(platilloANodo),
-        }));
+        const raiz = categoriasBackend.find(cat => cat.id === 0);
+        const otras = categoriasBackend.filter(cat => cat.id !== 0);
+
+        const nodosPlatillosRaiz: NodoArbol<Platillo>[] = (raiz?.platillos ?? []).map(platilloANodo);
+        const nodosCategorias: NodoArbol<PlatilloCategoria>[] = otras.map((cat) => categoriaANodo(cat));
 
         // Reasignación para activar la reactividad de Svelte 5
-        nodoPadre.hijos = nuevosHijos;
+        nodoPadre.hijos = [...nodosPlatillosRaiz, ...nodosCategorias];
+
+        window.addEventListener("keydown", onKeydownFueraSelectNull);
+        return () => window.removeEventListener("keydown", onKeydownFueraSelectNull);
       } catch (error) {
         const err = error as string;
         toast.rojo(`Error al obtener información: ${err}`);
@@ -56,6 +76,33 @@
     }else{
       return undefined;
     }
+  }
+
+  function getCategoryNodeById(h: NodoArbol<unknown>,id: number): NodoArbol<PlatilloCategoria> | undefined{
+    const data = h.data as Platillo | PlatilloCategoria;
+    if(data.tipo === "categoria"){
+      if(data.id === id){
+        return h as NodoArbol<PlatilloCategoria>;
+      }
+    }
+    if(h.hijos){
+      for(const hijo of h.hijos){
+        const res = getCategoryNodeById(hijo,id);
+        if(res) return res;
+      }
+    }
+    return undefined;
+  }
+
+  function findNodeById(h: NodoArbol<unknown>, id: string): NodoArbol<unknown> | undefined {
+    if (h.id === id) return h;
+    if (h.hijos) {
+      for (const hijo of h.hijos) {
+        const res = findNodeById(hijo, id);
+        if (res) return res;
+      }
+    }
+    return undefined;
   }
 
   async function addCategory(nombre: string | null) {
@@ -83,20 +130,149 @@
     }
   }
 
+  async function addPlatillo(datos: {nombre: string, descripcion: string | null, precio: number, imagen: string | null} | null) {
+    if(!datos) {
+      modalAbiertoAddCategoria = false;
+      return;
+    }
+    try{
+      const imageBytes = datos.imagen ? await previewUrlAUint8(datos.imagen) : null;
+      if(datos.imagen) URL.revokeObjectURL(datos.imagen); // Liberar memoria si se creó un objeto URL
+      if(!selectedNode || selectedNode === "cat-0"){
+        //Cargarlo en raiz, es decir, dentro de la categoría "Platillos"
+        const lastId = await invoke<number>("insert_platillo", { nombre: datos.nombre, descripcion: datos.descripcion, precio: datos.precio, id_categoria: null, image_bytes: imageBytes });
+        const nodoPlatillo: NodoArbol<Platillo> = {
+          id: `plat-${lastId}`, // Generar un ID temporal único
+          label: `${datos.nombre} - $${formatearMoneda(datos.precio)}`,
+          data: {tipo: "platillo", id: lastId, id_categoria:0, descripcion: datos.descripcion, nombre: datos.nombre, precio: datos.precio },
+        };
+        nodoPadre.hijos?.push(nodoPlatillo);
+      }else{
+        //Verificar si el nodo seleccionado es una categoría, en ese caso agrrgarlo ahi, o si es un platillo, agregarlo a la categoría padre de ese platillo
+        const esCategoria = selectedNode.startsWith("cat-");
+        if(esCategoria){
+          const nodoCategoria = nodoPadre.hijos?.find(nodo=>nodo.id === selectedNode);
+          if(!nodoCategoria){
+            toast.rojo("No se encontró la categoría seleccionada");
+            return;
+          }
+          const idFather = (nodoCategoria.data as PlatilloCategoria).id;
+          const lastId = await invoke<number>("insert_platillo", { nombre: datos.nombre, descripcion: datos.descripcion, precio: datos.precio, id_categoria: idFather, image_bytes: imageBytes });
+          const nodoPlatillo: NodoArbol<Platillo> = {
+            id: `plat-${lastId}`, // Generar un ID temporal único
+            label: `${datos.nombre} - $${formatearMoneda(datos.precio)}`,
+            data: {tipo: "platillo", id: lastId, id_categoria:idFather, descripcion: datos.descripcion, nombre: datos.nombre, precio: datos.precio }, // ID temporal
+          }
+          nodoCategoria.hijos?.push(nodoPlatillo);
+        }else{
+          //Es un platillo, entonces buscar la categoría padre de ese platillo
+          const nodoPlatillo = findNodeById(nodoPadre, selectedNode);
+          if(!nodoPlatillo){
+            toast.rojo("No se encontró el platillo seleccionado");
+            return;
+          }
+          const idCategoria = (nodoPlatillo.data as Platillo).id_categoria;
+          const cat = getCategoryNodeById(nodoPadre,idCategoria);
+          if(!cat){
+            toast.rojo("No se encontró la categoría del platillo seleccionado");
+            return;
+          }
+          const lastId = await invoke<number>("insert_platillo", { nombre: datos.nombre, descripcion: datos.descripcion, precio: datos.precio, id_categoria: idCategoria, image_bytes: imageBytes });
+          const nodoNuevoPlatillo: NodoArbol<Platillo> = {
+            id: `plat-${lastId}`, // Generar un ID temporal único
+            label: `${datos.nombre} - $${formatearMoneda(datos.precio)}`,
+            data: {tipo: "platillo", id: lastId, id_categoria:idCategoria, descripcion: datos.descripcion, nombre: datos.nombre, precio: datos.precio }, // ID temporal
+          }
+          cat.hijos?.push(nodoNuevoPlatillo);
+        }
+      }
+      toast.verde("Platillo agregado correctamente");
+      modalAbiertoAddCategoria = false;
+    }
+      catch(error){
+        const err = error as string;
+        toast.rojo(`Error al insertar platillo: ${err}`);
+      }
+  }
+
   function onSeleccionar(nodo: NodoArbol<unknown>){
+    if(selectedNode === nodo.id) return; // No hacer nada si el nodo seleccionado es el mismo
     selectedNode = nodo.id;
+    const node = findNodeById(nodoPadre, selectedNode);
+
+    // Siempre libera la imagen anterior antes de cualquier otra cosa
+    if (imagenInfoBox) {
+      URL.revokeObjectURL(imagenInfoBox);
+      imagenInfoBox = null;
+    }
+
+    if(!node){
+      infoboxAbierto = false;
+      textoInfoBox = "";
+      return;
+    }
+
+    const data = node.data as Platillo | PlatilloCategoria;
+
+    if(data.tipo === "categoria"){
+      if(data.id === 0){
+        textoInfoBox = `Esta es la categoría raíz, no se puede eliminar ni modificar.`;
+      } else {
+        textoInfoBox = `Categoría: ${data.nombre}`;
+      }
+      infoboxAbierto = true;
+    } else {
+      textoInfoBox = `Platillo: ${data.nombre}\nPrecio: $${formatearMoneda(data.precio)}\nDescripción: ${data.descripcion ?? ""}`;
+      infoboxAbierto = true;
+
+      const idSeleccionadoAlPedir = selectedNode; // snapshot para evitar condición de carrera
+      obtenerImagenPlatillo(data.id).then((url) => {
+        if (selectedNode !== idSeleccionadoAlPedir) {
+          // el usuario ya seleccionó otra cosa mientras cargaba; descarta este resultado
+          if (url) URL.revokeObjectURL(url);
+          return;
+        }
+        imagenInfoBox = url;
+      });
+    }
+  }
+
+  function onclickFueraSelectNull(e: MouseEvent) {
+    if (e.target === e.currentTarget) {
+      selectedNode = null;
+      infoboxAbierto = false;
+      if(imagenInfoBox) {
+        URL.revokeObjectURL(imagenInfoBox);
+        imagenInfoBox = null;
+      }
+    }
+  }
+
+  function onKeydownFueraSelectNull(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      selectedNode = null;
+      infoboxAbierto = false;
+      if (imagenInfoBox) {
+        URL.revokeObjectURL(imagenInfoBox);
+        imagenInfoBox = null;
+      }
+    }
   }
 
 </script>
 
-<main class="w-screen h-screen p-6 bg-white dark:bg-[#010101] text-gray-900 dark:text-white flex flex-col">
+svelte
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<main onclick={onclickFueraSelectNull} onkeydown={onKeydownFueraSelectNull} class="w-screen h-screen p-6 bg-white dark:bg-[#010101] text-gray-900 dark:text-white flex flex-col">
   <div>
     <p>Registra tus platillos</p>
   </div>
 
   <div class="mt-5 flex flex-row gap-2 flex-wrap">
     <button class="btn-realista" onclick={()=>modalAbiertoCategoria = true}>Agregar categoría</button>
-    <button class="btn-realista">Agregar platillo</button>
+    <button class="btn-realista"onclick={()=>modalAbiertoAddCategoria = true} >Agregar platillo</button>
   </div>
 
   <div class="mt-5 w-full flex-1 overflow-auto bg-gray-200 dark:bg-gray-900">
@@ -110,4 +286,15 @@
   descripcion="Escribe el nombre de la categoría que quieres agregar."
   placeholder="Ej. Desayunos"
   onConfirmar={addCategory}
+/>
+
+<ModalAddPlatillo 
+  bind:abierto={modalAbiertoAddCategoria}
+  onAceptar={addPlatillo}
+/>
+
+<InfoBox
+  visible ={infoboxAbierto}
+  texto={textoInfoBox}
+  imagen={imagenInfoBox}
 />

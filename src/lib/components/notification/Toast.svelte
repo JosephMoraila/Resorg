@@ -9,7 +9,7 @@
   }
 </script>
 
-<div class="fixed top-4 left-1/2 -translate-x-1/2 flex flex-col gap-2 z-50 pointer-events-none">
+<div class="fixed top-4 left-1/2 -translate-x-1/2 flex flex-col gap-2 z-100 pointer-events-none">
   {#each toast.all as t (t.id)}
     <div class="px-5 py-3 rounded-lg text-white shadow-lg {colorClasses[t.color]}">
       {t.message}

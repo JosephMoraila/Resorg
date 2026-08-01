@@ -1,8 +1,6 @@
-use crate::db::{obtener_conexion_db, Platillo, get_platillos_by_category_id};
-use rusqlite::{Connection, ToSql, ErrorCode};
+use crate::db::{get_platillos_by_category_id, obtener_conexion_db, Platillo};
+use rusqlite::{Connection, ErrorCode, ToSql};
 use serde::{Deserialize, Serialize};
-
-
 
 #[tauri::command]
 /// Inserta una nueva categoría de platillo en la base de datos.
@@ -23,14 +21,15 @@ pub fn insert_category_platillo(name: String) -> Result<u64, String> {
     let comando: &str = "INSERT INTO categories_platillos (name) VALUES(?1);";
     let parametros: &[&dyn rusqlite::ToSql] = rusqlite::params![name];
 
-    conn.execute(comando, parametros).map_err(|e: rusqlite::Error| {
-        if let rusqlite::Error::SqliteFailure(err, _) = &e {
-            if err.code == ErrorCode::ConstraintViolation {
-                return format!("Ya existe una categoría con el nombre '{}'", name);
+    conn.execute(comando, parametros)
+        .map_err(|e: rusqlite::Error| {
+            if let rusqlite::Error::SqliteFailure(err, _) = &e {
+                if err.code == ErrorCode::ConstraintViolation {
+                    return format!("Ya existe una categoría con el nombre '{}'", name);
+                }
             }
-        }
-        e.to_string()
-    })?;
+            e.to_string()
+        })?;
 
     let nuevo_id: i64 = conn.last_insert_rowid();
     Ok(nuevo_id as u64)
@@ -45,11 +44,18 @@ pub struct PlatilloCategoria {
 
 #[tauri::command]
 pub fn get_categories_platillo() -> Result<Vec<PlatilloCategoria>, String> {
+    let padre = PlatilloCategoria{
+        id: 0,
+        nombre: "Platillos".to_string(),
+        platillos: get_platillos_by_category_id(None)?, // ahora sí se llena
+    };
+
     let conn: Connection = obtener_conexion_db()?;
     let comando: &str = "SELECT id, name FROM categories_platillos";
-    let mut stmt = conn.prepare(comando).map_err(|e: rusqlite::Error| e.to_string())?;
+    let mut stmt = conn
+        .prepare(comando)
+        .map_err(|e: rusqlite::Error| e.to_string())?;
 
-    // Primero solo sacamos id + nombre de cada categoría, sin anidar otra consulta aquí adentro
     let categorias_basicas: Vec<(i64, String)> = stmt
         .query_map((), |row| {
             let id: i64 = row.get::<&str, i64>("id")?;
@@ -60,11 +66,9 @@ pub fn get_categories_platillo() -> Result<Vec<PlatilloCategoria>, String> {
         .filter_map(|fila: Result<(i64, String), rusqlite::Error>| fila.ok())
         .collect();
 
-    // Ya fuera del closure de query_map, aquí SÍ podemos usar `?` con errores de tipo String
-    // sin ningún conflicto, porque esta función completa devuelve Result<_, String>
-    let mut categorias: Vec<PlatilloCategoria> = Vec::new();
+    let mut categorias: Vec<PlatilloCategoria> = vec![padre]; // 👈 padre va primero en el vec
     for (id, nombre) in categorias_basicas {
-        let platillos: Vec<Platillo> = get_platillos_by_category_id(id as u64)?;
+        let platillos: Vec<Platillo> = get_platillos_by_category_id(Some(id as u64))?;
         categorias.push(PlatilloCategoria {
             id: id as u64,
             nombre,
