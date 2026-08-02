@@ -35,6 +35,17 @@ pub fn insert_category_platillo(name: String) -> Result<u64, String> {
     Ok(nuevo_id as u64)
 }
 
+#[tauri::command]
+pub fn update_category_platillo(id: u64, name: String) -> Result<(), String> {
+    let conn: Connection = obtener_conexion_db()?;
+    let comando: &str = "UPDATE categories_platillos SET name = ?1 WHERE id = ?2;";
+    let parametros: &[&dyn rusqlite::ToSql] = rusqlite::params![name, id as i64];
+
+    conn.execute(comando, parametros).map_err(|e: rusqlite::Error| e.to_string())?;
+
+    Ok(())
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PlatilloCategoria {
     pub id: u64,

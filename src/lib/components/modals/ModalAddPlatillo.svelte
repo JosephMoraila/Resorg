@@ -2,21 +2,32 @@
 
     import { fade, fly } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
-    import { formatearMonedaInput, stringANumero } from "$lib/utils/string_utils";
+    import { formatearMonedaInput, stringANumero, formatearMoneda } from "$lib/utils/string_utils";
     import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
     import { readFile } from "@tauri-apps/plugin-fs";
     import { onMount, onDestroy } from "svelte";
     import { toast } from "$lib/toast.svelte";
 
 
+    interface ValorInicialPlatillo {
+        nombre: string;
+        descripcion: string | null;
+        precio: number;
+        imagenUrl: string | null;
+    }
+
     interface Props{
         abierto: boolean;
+        accion?: "crear" | "editar";
+        valorInicial?: ValorInicialPlatillo | null;
         onCancelar?: () => void;
         onAceptar: (datos: {nombre: string, descripcion: string | null, precio: number, imagen: string | null} | null) => void;
     }
 
     let {
         abierto = $bindable(),
+        accion = "crear",
+        valorInicial = null,
         onCancelar,
         onAceptar
 
@@ -30,6 +41,34 @@
     // Guardamos la URL temporal de la imagen
     let previewUrl = $state<string | null>(null);
     let esArrastrando = $state(false);
+
+    // Para no pisar la imagen si el usuario ya la cambió/quitó manualmente
+    let imagenTocada = $state(false);
+    let previoAbierto = false;
+
+    $effect(() => {
+        if (abierto && !previoAbierto) {
+            // Se acaba de abrir el modal: inicializa el formulario
+            imagenTocada = false;
+            if (accion === "editar" && valorInicial) {
+                nombre = valorInicial.nombre;
+                descripcion = valorInicial.descripcion ?? "";
+                precio = formatearMoneda(valorInicial.precio);
+                previewUrl = valorInicial.imagenUrl;
+            } else {
+                nombre = "";
+                descripcion = "";
+                precio = "";
+                previewUrl = null;
+            }
+        } else if (abierto && accion === "editar" && !imagenTocada) {
+            // La imagen del platillo puede llegar después (se carga de forma asíncrona)
+            if (valorInicial?.imagenUrl && previewUrl !== valorInicial.imagenUrl) {
+                previewUrl = valorInicial.imagenUrl;
+            }
+        }
+        previoAbierto = abierto;
+    });
 
     let unlisten: (() => void) | null = null;
 
@@ -102,6 +141,7 @@
         if (previewUrl) {
             URL.revokeObjectURL(previewUrl);
         }
+        imagenTocada = true;
         previewUrl = URL.createObjectURL(archivo);
     }
 
@@ -119,6 +159,7 @@
         if (previewUrl) {
             URL.revokeObjectURL(previewUrl);
         }
+        imagenTocada = true;
         previewUrl = URL.createObjectURL(blob);
     }
 
@@ -131,6 +172,7 @@
     }
 
     function eliminarImagen() {
+        imagenTocada = true;
         if (previewUrl) {
             URL.revokeObjectURL(previewUrl);
             previewUrl = null;
@@ -183,7 +225,7 @@
         >
 
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Agregar platillo
+                {accion === "editar" ? "Editar platillo" : "Agregar platillo"}
             </h2>
 
             <label for="nombre" class="text-sm text-gray-500 dark:text-gray-400 mt-1 block">

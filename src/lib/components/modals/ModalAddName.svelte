@@ -5,6 +5,7 @@
 
   interface Props {
     abierto: boolean;
+    valor: string;
     titulo: string;
     descripcion?: string;
     placeholder?: string;
@@ -14,14 +15,13 @@
 
   let {
     abierto = $bindable(),
+    valor = $bindable(""),
     titulo,
     descripcion,
     placeholder = "",
     onConfirmar,
     onCancelar,
   }: Props = $props();
-
-  let valor = $state("");
 
     function autofocus(node: HTMLInputElement) {
         node.focus();

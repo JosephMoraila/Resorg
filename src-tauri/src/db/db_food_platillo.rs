@@ -28,6 +28,31 @@ pub fn insert_platillo(nombre: String, descripcion: Option<String>, precio: f64,
     Ok(last_id as u64)
 }
 
+#[tauri::command(rename_all = "snake_case")]
+pub fn update_platillo(id: u64,nombre: String,descripcion: Option<String>,precio: f64,image_bytes: Option<Vec<u8>>,) -> Result<(), String> {
+    let conn: Connection = obtener_conexion_db()?;
+    let comando: &str = "UPDATE food_platillos SET name = ?1, descripcion = ?2, precio = ?3 WHERE id = ?4";
+    conn.execute(comando, (nombre, descripcion, precio, id as i64)).map_err(|e: rusqlite::Error| e.to_string())?;
+
+    let image_folder: std::path::PathBuf = obtener_carpeta_imagen_platillos()?;
+    let image_path: std::path::PathBuf = image_folder.join(format!("platillo_{}.png", id));
+
+    match image_bytes {
+        Some(bytes) => {
+            // Se pasó una imagen: se guarda en su lugar, exista o no exista previamente
+            std::fs::write(&image_path, bytes).map_err(|e| e.to_string())?;
+        }
+        None => {
+            // No se pasó imagen: si antes había una, se elimina; si no había, no se hace nada
+            if image_path.exists() {
+                std::fs::remove_file(&image_path).map_err(|e| e.to_string())?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
 pub fn get_platillos_by_category_id(category_id: Option<u64>) -> Result<Vec<Platillo>, String> {
     let conn: Connection = obtener_conexion_db()?;
 
