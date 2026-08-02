@@ -53,6 +53,21 @@ pub fn update_platillo(id: u64,nombre: String,descripcion: Option<String>,precio
     Ok(())
 }
 
+#[tauri::command]
+pub fn delete_platillo(id: u64) -> Result<(), String> {
+    let conn: Connection = obtener_conexion_db()?;
+    let comando: &str = "DELETE FROM food_platillos WHERE id = ?1";
+    conn.execute(comando, (id as i64,)).map_err(|e: rusqlite::Error| e.to_string())?;
+
+    let image_folder: std::path::PathBuf = obtener_carpeta_imagen_platillos()?;
+    let image_path: std::path::PathBuf = image_folder.join(format!("platillo_{}.png", id));
+    if image_path.exists() {
+        std::fs::remove_file(image_path).map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
 pub fn get_platillos_by_category_id(category_id: Option<u64>) -> Result<Vec<Platillo>, String> {
     let conn: Connection = obtener_conexion_db()?;
 

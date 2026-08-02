@@ -46,6 +46,17 @@ pub fn update_category_platillo(id: u64, name: String) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+pub fn delete_category_platillo(id: u64) -> Result<(), String> {
+    let conn: Connection = obtener_conexion_db()?;
+    let comando: &str = "DELETE FROM categories_platillos WHERE id = ?1;";
+    let parametros: &[&dyn rusqlite::ToSql] = rusqlite::params![id as i64];
+
+    conn.execute(comando, parametros).map_err(|e: rusqlite::Error| e.to_string())?;
+
+    Ok(())
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PlatilloCategoria {
     pub id: u64,

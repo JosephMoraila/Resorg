@@ -4,7 +4,7 @@ use tauri::AppHandle;
 mod window;
 use crate::window::enfocar_ventana;
 mod db;
-use crate::db::{get_categories_platillo, inicializar_tablas, insert_category_platillo, insert_platillo, update_category_platillo, update_platillo};
+use crate::db::{get_categories_platillo, inicializar_tablas, insert_category_platillo, insert_platillo, update_category_platillo, update_platillo, delete_category_platillo, delete_platillo};
 mod path_and_files;
 use crate::path_and_files::get_imagen_platillo;
 
@@ -20,7 +20,7 @@ pub fn run() {
             insert_category_platillo,
             get_categories_platillo,
             insert_platillo,
-            get_imagen_platillo, update_category_platillo, update_platillo
+            get_imagen_platillo, update_category_platillo, update_platillo, delete_platillo, delete_category_platillo
         ])
         .setup(|app| {
             APP_HANDLE.set(app.handle().clone()).unwrap();

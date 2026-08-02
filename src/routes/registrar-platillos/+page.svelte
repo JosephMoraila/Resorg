@@ -10,6 +10,9 @@
   import { previewUrlAUint8 } from "$lib/utils/file_utils";
   import InfoBox from "$lib/components/infobox/InfoBox.svelte";
   import { obtenerImagenPlatillo } from "$lib/utils/file_utils";
+  import ModalAccept from "$lib/components/modals/ModalAccept.svelte";
+  import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+  import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
   let modalCategoriaNombre = $state("");
   let modalAccionCategoria = $state<"editar" | "crear" | null>(null);
@@ -25,6 +28,11 @@
   let infoboxAbierto = $state(false);
   let textoInfoBox = $state("");
   let imagenInfoBox = $state<string | null>(null);
+
+  let modalConfirmacionAbierto = $state(false);
+  let titleModalConfirmacion = $state("");
+  let messageModalConfirmacion = $state("");
+  let nodoSiendoEliminado: NodoArbol<PlatilloCategoria | Platillo> | null = $state(null);
 
   let nodoPadre: NodoArbol<PlatilloCategoria> = $state({
     id: "cat-0",
@@ -69,10 +77,15 @@
       } catch (error) {
         const err = error as string;
         toast.rojo(`Error al obtener información: ${err}`);
+      }finally {
+        const label = getCurrentWebviewWindow().label;
+        const ventana = await WebviewWindow.getByLabel(label);
+        await ventana?.show();
       }
     }
     
     getCategories();
+  
   });
 
   function getCategorySameName(h: NodoArbol<unknown>, nombre: string): PlatilloCategoria | undefined{
@@ -360,6 +373,64 @@
     }
   }
 
+  function onEliminarClick() {
+    if (!selectedNode) return;
+    const node = findNodeById(nodoPadre, selectedNode);
+    if (!node) return;
+    const data = node.data as Platillo | PlatilloCategoria;
+
+    if (data.tipo === "categoria") {
+      if(data.id === 0) return;
+      nodoSiendoEliminado = node as NodoArbol<PlatilloCategoria>;
+      titleModalConfirmacion = `Eliminar categoría: ${data.nombre}`;
+      messageModalConfirmacion = "¿Estás seguro de que quieres eliminar esta categoría? Todos los platillos dentro de ella también serán eliminados.";
+      modalConfirmacionAbierto = true;
+    } else {
+      nodoSiendoEliminado = node as NodoArbol<Platillo>;
+      titleModalConfirmacion = `Eliminar platillo: ${data.nombre}`;
+      messageModalConfirmacion = "¿Estás seguro de que quieres eliminar este platillo?";
+      modalConfirmacionAbierto = true;
+    }
+  }
+
+
+function onModalConfirmacionResult(result: boolean) {
+  if (result && nodoSiendoEliminado) {
+    const nodoAEliminar = nodoSiendoEliminado; //snapshot, capturado ANTES de que se ponga en null
+    const data = nodoAEliminar.data as Platillo | PlatilloCategoria;
+
+    if (data.tipo === "categoria") {
+      invoke("delete_category_platillo", { id: data.id })
+        .then(() => {
+          nodoPadre.hijos = nodoPadre.hijos?.filter(nodo => nodo !== nodoAEliminar) ?? [];
+          toast.verde("Categoría eliminada correctamente");
+        })
+        .catch((error) => {
+          const err = error as string;
+          toast.rojo(`Error al eliminar categoría: ${err}`);
+        });
+    } else {
+      invoke("delete_platillo", { id: data.id })
+        .then(() => {
+          const categoriaNode = getCategoryNodeById(nodoPadre, data.id_categoria);
+          if (categoriaNode) {
+            categoriaNode.hijos = categoriaNode.hijos?.filter(nodo => nodo !== nodoAEliminar) ?? [];
+          } else {
+            nodoPadre.hijos = nodoPadre.hijos?.filter(nodo => nodo !== nodoAEliminar) ?? [];
+          }
+          toast.verde("Platillo eliminado correctamente");
+        })
+        .catch((error) => {
+          const err = error as string;
+          toast.rojo(`Error al eliminar platillo: ${err}`);
+        });
+    }
+  }
+  selectedNode = null;
+  nodoSiendoEliminado = null; // ahora sí puedes limpiarlo de inmediato sin romper nada
+  modalConfirmacionAbierto = false;
+}
+
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -374,6 +445,7 @@
     <button class="btn-realista" onclick={onCrearCategoriaClick}>Agregar categoría</button>
     <button class="btn-realista"onclick={onCrearPlatilloClick} >Agregar platillo</button>
     <button class="btn-realista" class:opacity-50={selectedNode === null} class:cursor-not-allowed={selectedNode === null} disabled={selectedNode === null} onclick={onEditarClick}>Editar</button>
+    <button class="btn-realista" class:opacity-50={selectedNode === null} class:cursor-not-allowed={selectedNode === null} disabled={selectedNode === null} onclick={onEliminarClick} >Eliminar</button>
   </div>
 
   <div class="mt-5 w-full flex-1 overflow-auto bg-gray-200 dark:bg-gray-900">
@@ -401,4 +473,11 @@
   visible ={infoboxAbierto}
   texto={textoInfoBox}
   imagen={imagenInfoBox}
+/>
+
+<ModalAccept
+  abierto={modalConfirmacionAbierto}
+  message={messageModalConfirmacion}
+  title={titleModalConfirmacion}
+  onResult={onModalConfirmacionResult}
 />

@@ -26,7 +26,7 @@
 
   async function abrirVentana(value: string){
     const info = recordVentanas[value];
-    new WebviewWindow(value, {...info, center: true, visible: true});
+    new WebviewWindow(value, {...info, center: true, visible: false});
     const paramEnfocarVentana = {label: value};
     invoke("enfocar_ventana", paramEnfocarVentana);
   }
