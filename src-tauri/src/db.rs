@@ -2,6 +2,8 @@ mod db_category_platillo;
 pub use crate::db::db_category_platillo::*;
 mod db_food_platillo;
 pub use crate::db::db_food_platillo::*;
+mod db_floors;
+pub use crate::db::db_floors::*;
 
 use crate::path_and_files::obtener_base_path;
 use rusqlite::Connection;
@@ -35,10 +37,26 @@ pub fn inicializar_tablas() -> Result<(), String> {
             category_id INTEGER,
             FOREIGN KEY (category_id) REFERENCES categories_platillos(id) ON DELETE CASCADE
         );
+    
+        CREATE TABLE IF NOT EXISTS edificio (
+            piso INTEGER UNIQUE NOT NULL,
+            mesas INTEGER NOT NULL DEFAULT 1
+        );
+
     ";
 
-    conn.execute_batch(comando)
-        .map_err(|e: rusqlite::Error| e.to_string())?;
+    conn.execute_batch(comando).map_err(|e: rusqlite::Error| e.to_string())?;
+
+    let comando_count_pisos: &str = "SELECT COUNT(*) FROM edificio";
+    let count_edificio: i32= conn.query_row(comando_count_pisos, [], |row| {
+        let count: i32 = row.get(0)?;
+        Ok(count)
+    }).map_err(|e: rusqlite::Error| e.to_string())?;
+
+    if count_edificio == 0 {
+        let comando_insert: &str = "INSERT INTO edificio (piso, mesas) VALUES (1, 1)";
+        conn.execute(comando_insert, []).map_err(|e: rusqlite::Error| e.to_string())?;
+    }
 
     Ok(())
 }

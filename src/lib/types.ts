@@ -7,7 +7,8 @@ export interface NodoArbol<T = unknown> {
 }
 
 export interface PropsArbol<T> {
-  nodo: NodoArbol<T>;
+  nodo?: NodoArbol<T> | null;
+  nodos?: NodoArbol<T>[];
   onSeleccionar?: (nodo: NodoArbol<unknown>) => void;
   selectedId?: string | null;
 }
@@ -26,4 +27,9 @@ export interface Platillo{
     descripcion: string | null;
     precio: number;
     id_categoria:number;
+}
+
+export interface Piso{
+  piso: number;
+  numero_mesas: number;
 }

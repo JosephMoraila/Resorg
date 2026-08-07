@@ -6,15 +6,21 @@
   let submenuAbierto = $state<string | null>(null);
 
   const recordVentanas: Record<string, {url:string, title: string, width: number, height: number}> = {
-    "registrar-platillos": {title: "Registrar platillos", url: "/registrar-platillos", height: 800, width: 800, } 
+    "registrar-platillos": {title: "Registrar platillos", url: "/registrar-platillos", height: 800, width: 800, },
+    "registrar-mesas": {title: "Registrar mesas", url: "/registrar-mesas", height: 800, width: 800, },
   };
 
-  const menuOptions = [
+  const menuOptions: { value: string; label: string; suboptions: { value: string; label: string }[] }[] = [
     {
       value: "platillos",
       label: "Platillos",
       suboptions: [{ value: "registrar-platillos", label: "Registrar platillos"}]
     },
+    {
+      label: "Mesas",
+      value: "mesas",
+      suboptions: [{ value: "registrar-mesas", label: "Registrar mesas"}]
+    }
   ] as const;
 
   function manejarTeclado(event: KeyboardEvent) {
@@ -26,7 +32,7 @@
 
   async function abrirVentana(value: string){
     const info = recordVentanas[value];
-    new WebviewWindow(value, {...info, center: true, visible: false});
+    new WebviewWindow(value, {...info, center: true, visible: true});
     const paramEnfocarVentana = {label: value};
     invoke("enfocar_ventana", paramEnfocarVentana);
   }

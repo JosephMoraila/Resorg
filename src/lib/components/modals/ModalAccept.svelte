@@ -40,7 +40,7 @@
   onclick={cancelar}
   onkeydown={manejarTeclado}
 >
-    <div use:autofocus transition:fly={{ y: -15, duration: 200, easing: cubicOut }} class="bg-white dark:bg-[#1a1f2e] rounded-lg shadow-xl p-6 w-full max-w-sm mx-4" onclick={(e) => e.stopPropagation()}>
+    <div use:autofocus transition:fly={{ y: -15, duration: 200, easing: cubicOut }} class="bg-white dark:bg-[#1a1f2e] text-black dark:text-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4" onclick={(e) => e.stopPropagation()}>
         <h2 class="text-lg font-semibold mb-4">{title}</h2>
         <p class="mb-6">{message}</p>
         <div class="flex justify-end space-x-4">
