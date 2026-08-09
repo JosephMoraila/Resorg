@@ -4,6 +4,8 @@ mod db_food_platillo;
 pub use crate::db::db_food_platillo::*;
 mod db_floors;
 pub use crate::db::db_floors::*;
+mod db_meseros;
+pub use crate::db::db_meseros::*;
 
 use crate::path_and_files::obtener_base_path;
 use rusqlite::Connection;
@@ -41,6 +43,11 @@ pub fn inicializar_tablas() -> Result<(), String> {
         CREATE TABLE IF NOT EXISTS edificio (
             piso INTEGER UNIQUE NOT NULL,
             mesas INTEGER NOT NULL DEFAULT 1
+        );
+
+        CREATE TABLE IF NOT EXISTS meseros (
+            id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre  TEXT NOT NULL UNIQUE COLLATE NOCASE
         );
 
     ";

@@ -33,3 +33,8 @@ export interface Piso{
   piso: number;
   numero_mesas: number;
 }
+
+export interface Mesero{
+  id: number;
+  nombre: string;
+}

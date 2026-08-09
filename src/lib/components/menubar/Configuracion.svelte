@@ -8,6 +8,7 @@
   const recordVentanas: Record<string, {url:string, title: string, width: number, height: number}> = {
     "registrar-platillos": {title: "Registrar platillos", url: "/registrar-platillos", height: 800, width: 800, },
     "registrar-mesas": {title: "Registrar mesas", url: "/registrar-mesas", height: 800, width: 800, },
+    "meseros": {title: "Meseros", url: "/meseros", height: 800, width: 800,},
   };
 
   const menuOptions: { value: string; label: string; suboptions: { value: string; label: string }[] }[] = [
@@ -20,6 +21,11 @@
       label: "Mesas",
       value: "mesas",
       suboptions: [{ value: "registrar-mesas", label: "Registrar mesas"}]
+    },
+    {
+      label: "Meseros",
+      value: "meseros",
+      suboptions: [{value: "meseros", label: "Meseros"}]
     }
   ] as const;
 
