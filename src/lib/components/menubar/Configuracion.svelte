@@ -9,6 +9,7 @@
     "registrar-platillos": {title: "Registrar platillos", url: "/registrar-platillos", height: 800, width: 800, },
     "registrar-mesas": {title: "Registrar mesas", url: "/registrar-mesas", height: 800, width: 800, },
     "meseros": {title: "Meseros", url: "/meseros", height: 800, width: 800,},
+    "impresora": {title: "Impresora", url: "/impresora", height: 800, width: 800},
   };
 
   const menuOptions: { value: string; label: string; suboptions: { value: string; label: string }[] }[] = [
@@ -26,7 +27,13 @@
       label: "Meseros",
       value: "meseros",
       suboptions: [{value: "meseros", label: "Meseros"}]
+    },
+    {
+      value: "impresora",
+      label: "Ticket",
+      suboptions: [{label: "Impresora", value: "impresora"}]
     }
+
   ] as const;
 
   function manejarTeclado(event: KeyboardEvent) {

@@ -38,3 +38,10 @@ pub fn get_imagen_platillo(id: u64) -> Result<Option<Vec<u8>>, String> {
         Err(e) => Err(e.to_string()), // error real (permisos, etc.)
     }
 }
+
+pub fn get_json_printing_settings() -> Result<PathBuf, String> {
+    let base_path: PathBuf = obtener_base_path()?;
+    let ruta: PathBuf = base_path.join("printing_settings.json"); 
+
+    Ok(ruta)
+}

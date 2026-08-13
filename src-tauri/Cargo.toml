@@ -24,3 +24,13 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rusqlite = { version = "0.40.1", features = ["bundled"] }
 tauri-plugin-fs = "2.0"
+printers = "2"
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = [
+    "Win32_Graphics_Gdi",
+    "Win32_Graphics_Printing",
+    "Win32_Storage_Xps",
+    "Win32_Foundation",
+    "Win32_Graphics_Imaging", 
+    "Win32_System_Com", 
+] }
