@@ -4,7 +4,7 @@ use tauri::AppHandle;
 mod window;
 use crate::window::enfocar_ventana;
 mod db;
-use crate::db::{get_categories_platillo,insert_floor,delete_piso,delete_mesero, insert_mesero, get_meseros, get_floor_and_mesas,update_floor, update_mesas, inicializar_tablas, insert_category_platillo, insert_platillo, update_category_platillo, update_platillo, delete_category_platillo, delete_platillo};
+use crate::db::{get_categories_platillo,insert_floor,delete_piso,delete_mesero, insert_mesero, get_meseros, get_floor_and_mesas,update_floor, update_mesas, inicializar_tablas, insert_category_platillo, insert_platillo, update_category_platillo, update_platillo, delete_category_platillo, delete_platillo, is_mesa_ocupada, insert_pedido_local, insert_pedido_domicilio, insert_pedido_recoger};
 mod path_and_files;
 use crate::path_and_files::{get_imagen_platillo};
 mod printer;
@@ -25,7 +25,8 @@ pub fn run() {
             get_imagen_platillo, update_category_platillo, update_platillo, delete_platillo, delete_category_platillo,
             insert_floor, update_floor, update_mesas, get_floor_and_mesas, delete_piso,
             insert_mesero, get_meseros, delete_mesero,
-            obtener_impresoras, save_printting_settings, get_printting_settings
+            obtener_impresoras, save_printting_settings, get_printting_settings,
+            insert_pedido_local, is_mesa_ocupada, insert_pedido_local, insert_pedido_domicilio, insert_pedido_recoger
         ])
         .setup(|app| {
             APP_HANDLE.set(app.handle().clone()).unwrap();

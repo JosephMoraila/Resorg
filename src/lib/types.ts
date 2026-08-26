@@ -38,3 +38,11 @@ export interface Mesero{
   id: number;
   nombre: string;
 }
+
+export type TipoPedido = "Local" | "Domicilio" | "Recoger";
+
+export interface PlatilloPedido{
+  id_platillo: number;
+  id_category: null | number;
+  cantidad: number;
+}

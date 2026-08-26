@@ -6,6 +6,14 @@ mod db_floors;
 pub use crate::db::db_floors::*;
 mod db_meseros;
 pub use crate::db::db_meseros::*;
+mod db_pedidos_local;
+pub use crate::db::db_pedidos_local::*;
+mod db_pedidos;
+pub use crate::db::db_pedidos::*;
+mod db_platillo_domicilio;
+pub use crate::db::db_platillo_domicilio::*;
+mod db_pedidos_recoger;
+pub use crate::db::db_pedidos_recoger::*;
 
 use crate::path_and_files::obtener_base_path;
 use rusqlite::Connection;
@@ -48,6 +56,53 @@ pub fn inicializar_tablas() -> Result<(), String> {
         CREATE TABLE IF NOT EXISTS meseros (
             id      INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre  TEXT NOT NULL UNIQUE COLLATE NOCASE
+        );
+
+        CREATE TABLE IF NOT EXISTS pedidos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            total REAL NOT NULL DEFAULT 0.0,
+            tipo_pedido TEXT NOT NULL,
+            nombre_cliente TEXT,
+            nota TEXT,
+            estatus TEXT NOT NULL DEFAULT 'pendiente',
+            fecha_hora_pedido TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS platillos_pedidos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name        TEXT NOT NULL COLLATE NOCASE,
+            precio      REAL NOT NULL DEFAULT 0.0,
+            platillo_id INTEGER NOT NULL,
+            category_id INTEGER,
+            pedido_id INTEGER NOT NULL,
+            FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE
+            FOREIGN KEY (platillo_id) REFERENCES food_platillos(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS pedidos_local(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            piso INTEGER NOT NULL,
+            mesa INTEGER NOT NULL,
+            mesero TEXT NOT NULL,
+            pedido_id INTEGER NOT NULL,
+            FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS pedidos_domicilio(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            colonia TEXT,
+            calle TEXT,
+            numero_interior_exterior INTEGER,
+            telefono TEXT,
+            repartidor TEXT,
+            pedido_id INTEGER NOT NULL,
+            FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS pedidos_recoger(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pedido_id INTEGER NOT NULL,
+            FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE
         );
 
     ";

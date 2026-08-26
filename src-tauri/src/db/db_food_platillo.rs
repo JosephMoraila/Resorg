@@ -1,9 +1,9 @@
 use crate::db::obtener_conexion_db;
 use crate::path_and_files::obtener_carpeta_imagen_platillos;
-use rusqlite::Connection;
+use rusqlite::{Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Platillo {
     pub id: u64,
     pub nombre: String,
@@ -85,7 +85,7 @@ pub fn get_platillos_by_category_id(category_id: Option<u64>) -> Result<Vec<Plat
         let nombre: String = row.get("name")?;
         let descripcion: Option<String> = row.get("descripcion")?;
         let precio: f64 = row.get("precio")?;
-        let category_id: Option<i64> = row.get("category_id")?; //ahora Option, porque puede ser NULL
+        let category_id: Option<i64> = row.get("category_id")?; //Option, porque puede ser NULL
 
         Ok(Platillo {
             id: id as u64,
@@ -107,4 +107,23 @@ pub fn get_platillos_by_category_id(category_id: Option<u64>) -> Result<Vec<Plat
         .collect();
 
     Ok(comidas)
+}
+
+pub fn get_platillo_by_id(platillo_id: u64)->Result<Option<Platillo>, String>{
+    let conn: Connection = obtener_conexion_db()?;
+    let comando: &str  = "SELECT name, descripcion, precio, category_id FROM food_platillos WHERE id = ?1";
+    let params = rusqlite::params![platillo_id as i64];
+
+    let res: Result<Platillo, rusqlite::Error> = conn.query_row(comando, params, |row|{
+        let nombre: String = row.get::<&str, String>("name")?;
+        let descripcion: Option<String> = row.get::<&str, Option<String>>("descripcion")?;
+        let precio: f64 = row.get::<&str, f64>("precio")?;
+        let category_id: Option<i64> = row.get("category_id")?; //Option, porque puede ser NULL
+        let cat: u64 = category_id.map(|v| v as u64).unwrap_or(0); //Si la categoria es NULL guardarla como 0
+        let p = Platillo{id: platillo_id, descripcion: descripcion, id_categoria: cat, nombre, precio};
+        Ok(p)
+    });
+    let opt_res: Result<Option<Platillo>, rusqlite::Error> = res.optional(); //Si no se encontró hacerlo option
+    let platillo: Option<Platillo> = opt_res.map_err(|e: rusqlite::Error| e.to_string())?;
+    Ok(platillo)
 }

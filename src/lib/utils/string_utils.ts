@@ -51,3 +51,23 @@ export function stringANumero(valorFormateado: string): number {
   const sinComas = valorFormateado.replace(/,/g, '');
   return parseFloat(sinComas) || 0;
 }
+
+/**
+ * Limpia un texto dejando solo números, el signo '+' y espacios individuales.
+ */
+export function limpiarTelefono(valor: string): string {
+	return valor
+		.replace(/[^0-9+ ]/g, '') // Elimina caracteres no permitidos
+		.replace(/ {2,}/g, ' ');   // Reduce múltiples espacios a uno solo
+}
+
+/**
+ * Manejador de evento genérico para inputs de teléfono.
+ * Limpia el valor del HTMLInputElement y retorna el texto resultante.
+ */
+export function sanitizarInputTelefono(e: Event): string {
+	const target = e.target as HTMLInputElement;
+	const valorLimpio = limpiarTelefono(target.value);
+	target.value = valorLimpio;
+	return valorLimpio;
+}
