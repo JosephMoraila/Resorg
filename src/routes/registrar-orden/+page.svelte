@@ -148,8 +148,13 @@
       return;
     }
 
+    if(filas.some(fila=>fila.cantidad <= 0)){
+      toast.amarillo('Algúna cantidad no es válida');
+      return;
+    }
+
     if(tipoPedido === "Local"){
-      if(mesa == null || mesa == 0){
+      if(mesa == null || mesa <= 0){
         toast.amarillo(`La mesa no es válida`);
         return;
       }
