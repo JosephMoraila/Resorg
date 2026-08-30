@@ -76,3 +76,29 @@ pub fn insert_into_platillos_pedidos(last_id_pedido: i64, platillos_real: Vec<Pl
 
     Ok(())
 }
+
+/// Se entrega un formato de texto con el ID del pedido y los platillos
+/// # Argumentos:
+/// * `last_id_pedido` - El ID de la ultima fila insertada en la tabla pedidos (Lo retorna la función `insert_into_pedidos`)
+/// * `platillos_real` - Slice de platillos que retorna la función `insert_into_pedidos`
+/// 
+/// # Retorna:
+/// `String` - String primero con el ID y abajo en una lista los platillos con su nombre y precio
+pub fn transform_last_id_and_platillos_into_text(last_id_pedido: i64, platillos_real: &[Platillo])->String{
+
+    let mut s: String = format!("Pedido ID: {}\n\n", last_id_pedido);
+    s += "Platillos:\n\n";
+
+    let mut lista: i32 = 1;
+
+    for platillo in platillos_real{
+        let n: &String = &platillo.nombre;
+        let p: f64 = platillo.precio;
+        s += &format!("{}.- Nombre: {} - Precio: {}\n", lista, n, p);
+        lista += 1;
+    }
+
+    s += "\n";
+
+    s
+}

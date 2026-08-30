@@ -162,8 +162,20 @@
         toast.amarillo(`Selecciona un mesero`);
         return;  
       }
-      const params = {piso, mesa};
+      const pisoObj = {piso};
+      const mesObj = {mesa};
+      const params = {...mesObj, ...pisoObj};
       try{
+        const isPisoExiste = await invoke<boolean>("is_piso_exists", pisoObj);
+        if(!isPisoExiste){
+          toast.amarillo(`El piso ${piso} no está registrado`);
+          return;
+        }
+        const isMesaExiste = await invoke<boolean>("is_mesa_exists", mesObj);
+        if(!isMesaExiste){
+          toast.amarillo(`La mesa ${mesa} no está registrada`);
+          return;
+        }
         const isOcupada = await invoke<boolean>("is_mesa_ocupada", params);
         if(isOcupada){
           toast.amarillo(`Esa mesa ya está ocupada`);
@@ -171,7 +183,7 @@
         }
       }catch(error){
         const err = error as string;
-        toast.rojo(`Error al verificar ocupamiento de mesa: ${err}`);
+        toast.rojo(`Error al verificar ocupamiento de mesa o su existencia: ${err}`);
         return;
       }
     }else if(tipoPedido == "Domicilio"){
