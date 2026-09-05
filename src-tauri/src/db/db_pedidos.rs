@@ -11,6 +11,7 @@ pub struct PlatilloPedido{
 }
 
 
+
 ///Inserta un pedido en la tabla pedidos
 /// # Argumentos:
 /// * `platillos` - Platillos de tipo orden el cual se pasará cada uno (el ID basta) a la funcion `get_platillo_by_id()` para tomar un struct de platillo original y se pondrá en el vector a retornar.

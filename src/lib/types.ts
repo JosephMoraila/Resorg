@@ -46,3 +46,62 @@ export interface PlatilloPedido{
   id_category: null | number;
   cantidad: number;
 }
+
+//Pedidos ya pedidos
+
+export type EstadoPedido = "Pendiente" | "Finalizado" | "Cancelado" | "Entregado" | "Cobrado";
+
+export interface PedidoLocal{
+  id: number;
+  piso: number;
+  mesa: number;
+  mesero: string;
+  pedido_id: number;
+}
+
+export interface PedidoDomicilio{
+  id: number;
+  colonia: string | null;
+  calle: string | null;
+  numero_interior_exterior: number | null;
+  telefono: string | null;
+  repartidor: string | null;
+  pedido_id: number;
+}
+
+export interface PedidoRecoger{
+  id: number;
+  pedido_id: number;
+}
+
+export interface PedidoPlatillo{
+  id: number;
+  name: string;
+  precio: number;
+  platillo_id: number;
+  categoria_id: number | null;
+  pedido_id: number;
+  platillo: Platillo | null;
+}
+
+export interface Pedido{
+  id: number;
+  total: number;
+  tipo: TipoPedido;
+  estado: EstadoPedido;
+  nombre_cliente: string | null;
+  nota: string | null;
+  fecha_hora: string;
+  platillos_pedidos: PedidoPlatillo[];
+  info_tipo_pedido: PedidoLocal | PedidoDomicilio | PedidoRecoger;
+}
+
+export interface FiltrosVerOrdenesProps{
+  id: null | number;
+  tipoPedido: null | TipoPedido;
+  nombreCliente: null | string;
+  fechaInicio: null | string; fechaFin: null | string; 
+  totalDesde: null | number; totalHasta: null | number;
+  nota: null | string;
+  estatus: null | EstadoPedido;
+}

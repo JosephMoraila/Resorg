@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/forms" {
+  strategy: "class";
+}
 @custom-variant dark (&:where(.dark, .dark *));
 
 .btn-realista {
@@ -15,4 +18,42 @@
     active:from-gray-200 active:via-gray-300 active:to-gray-400
     dark:active:from-gray-700 dark:active:via-gray-800 dark:active:to-gray-900
     transition-all duration-150;
+}
+
+@layer components {
+    .tabla-contenedor {
+        @apply w-full max-w-7xl overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm;
+    }
+
+    .tabla-estilizada {
+        @apply w-full text-left border-collapse text-sm;
+    }
+
+    .tabla-head {
+        @apply bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 uppercase tracking-wider text-xs;
+    }
+
+    .tabla-th {
+        @apply py-3.5 px-4 font-semibold;
+    }
+
+    .tabla-body {
+        @apply divide-y divide-gray-200 dark:divide-gray-800;
+    }
+
+    .tabla-tr {
+        @apply hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-colors;
+    }
+
+    .tabla-td {
+        @apply py-3 px-4 text-gray-600 dark:text-gray-400;
+    }
+
+    .tabla-td-primary {
+        @apply py-3 px-4 font-medium text-gray-900 dark:text-gray-100;
+    }
+
+    .tabla-badge {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400;
+    }
 }

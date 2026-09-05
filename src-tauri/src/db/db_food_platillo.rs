@@ -6,10 +6,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Platillo {
     pub id: u64,
+    pub tipo: Tipo,
     pub nombre: String,
     pub descripcion: Option<String>,
     pub precio: f64,
     pub id_categoria: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum Tipo{
+    #[serde(rename = "categoria")]
+    Categoria,
+    #[serde(rename = "platillo")]
+    Platillo,
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -92,6 +101,7 @@ pub fn get_platillos_by_category_id(category_id: Option<u64>) -> Result<Vec<Plat
             nombre,
             descripcion,
             precio,
+            tipo: Tipo::Platillo,
             id_categoria: category_id.map(|v| v as u64).unwrap_or(0),
         })
     };
@@ -120,7 +130,7 @@ pub fn get_platillo_by_id(platillo_id: u64)->Result<Option<Platillo>, String>{
         let precio: f64 = row.get::<&str, f64>("precio")?;
         let category_id: Option<i64> = row.get("category_id")?; //Option, porque puede ser NULL
         let cat: u64 = category_id.map(|v| v as u64).unwrap_or(0); //Si la categoria es NULL guardarla como 0
-        let p = Platillo{id: platillo_id, descripcion: descripcion, id_categoria: cat, nombre, precio};
+        let p = Platillo{id: platillo_id, descripcion: descripcion, id_categoria: cat, nombre, precio, tipo: Tipo::Platillo};
         Ok(p)
     });
     let opt_res: Result<Option<Platillo>, rusqlite::Error> = res.optional(); //Si no se encontró hacerlo option

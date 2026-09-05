@@ -1,4 +1,4 @@
-use crate::db::{get_platillos_by_category_id, obtener_conexion_db, Platillo};
+use crate::db::{get_platillos_by_category_id, obtener_conexion_db, Platillo, Tipo};
 use rusqlite::{Connection, ErrorCode, ToSql};
 use serde::{Deserialize, Serialize};
 
@@ -61,6 +61,7 @@ pub fn delete_category_platillo(id: u64) -> Result<(), String> {
 pub struct PlatilloCategoria {
     pub id: u64,
     pub nombre: String,
+    pub tipo: Tipo,
     pub platillos: Vec<Platillo>,
 }
 
@@ -68,6 +69,7 @@ pub struct PlatilloCategoria {
 pub fn get_categories_platillo() -> Result<Vec<PlatilloCategoria>, String> {
     let padre = PlatilloCategoria{
         id: 0,
+        tipo: Tipo::Categoria,
         nombre: "Platillos".to_string(),
         platillos: get_platillos_by_category_id(None)?, // ahora sí se llena
     };
@@ -93,6 +95,7 @@ pub fn get_categories_platillo() -> Result<Vec<PlatilloCategoria>, String> {
         let platillos: Vec<Platillo> = get_platillos_by_category_id(Some(id as u64))?;
         categorias.push(PlatilloCategoria {
             id: id as u64,
+            tipo: Tipo::Categoria,
             nombre,
             platillos,
         });

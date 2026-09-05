@@ -62,6 +62,7 @@
     async function getCategories() {
       try {
         const categoriasBackend = await invoke<PlatilloCategoria[]>("get_categories_platillo");
+        console.log(`Tipo cat: ${categoriasBackend[0].tipo}`);
 
         const raiz = categoriasBackend.find(cat => cat.id === 0);
         const otras = categoriasBackend.filter(cat => cat.id !== 0);

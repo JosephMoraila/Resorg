@@ -1,5 +1,5 @@
 /**
- * Formatea un string/entrada para que solo acepte números, 
+ * Formatea un string/entrada para que solo acepte números, Se usa en inputs de tipo texto para que el usuario pueda escribir libremente, pero el valor final se formatea como moneda.
  * añade comas cada 3 dígitos y limita a máximo 2 decimales.
  */
 export function formatearMonedaInput(valor: string): string {
@@ -29,6 +29,11 @@ export function formatearMonedaInput(valor: string): string {
   return entera;
 }
 
+/**
+ * Formatea un número como moneda, añadiendo comas cada 3 dígitos y limitando a máximo 2 decimales. Se usa para mostrar valores ya procesados en la interfaz de usuario.
+ * @param valor - El número a formatear.
+ * @returns El número formateado como string con comas y 2 decimales.
+ */
 export function formatearMoneda(valor: number): string {
   // 1. Redondear a 2 decimales y convertir a string fijo (evita problemas de punto flotante)
   const fijo = valor.toFixed(2);
@@ -70,4 +75,39 @@ export function sanitizarInputTelefono(e: Event): string {
 	const valorLimpio = limpiarTelefono(target.value);
 	target.value = valorLimpio;
 	return valorLimpio;
+}
+
+/**
+ * Retorna un string vacío si el valor es null o undefined, de lo contrario retorna el valor original.
+ * @param value - El valor a evaluar, que puede ser un string, null o undefined.
+ * @returns Un string vacío si el valor es null o undefined, de lo contrario retorna el valor original.
+ */
+export function returnEmptyStringIfNullOrUndefined(value: string | null | undefined): string {
+  const result = value ?? '';
+  return result;
+}
+
+/**
+ * Formatea un string de fecha proveniente de la base de datos a un formato legible en la zona horaria local.
+ * Ejemplo: "2024-06-15T14:30:00Z" -> "15 de junio de 2024, 14:30:00"
+ * @param fechaStr - El string de fecha en formato ISO 8601 proveniente de la base de datos.
+ * @returns Un string de fecha formateado según la zona horaria local y en un formato legible.
+ */
+export function formatearFechaDB(fechaStr: string): string {
+  // 1. Convierte "2026-08-31 03:05:59" (formato de SQLite, sin indicar zona)
+  //    a "2026-08-31T03:05:59Z" (formato ISO, la Z le dice a JS "esto es UTC")
+  const fechaISO = fechaStr.replace(" ", "T") + "Z";
+  const fecha = new Date(fechaISO);
+
+  // 2. Ahora sí, toLocaleString convierte correctamente de UTC a la hora local de la PC
+  const opciones: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  };
+  return fecha.toLocaleString(undefined, opciones);
 }

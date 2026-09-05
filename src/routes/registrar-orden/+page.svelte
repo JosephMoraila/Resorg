@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
+  import { emit } from "@tauri-apps/api/event";
   import type { TipoPedido, Platillo, PlatilloCategoria, Mesero, PlatilloPedido } from "$lib/types";
   import { sanitizarInputTelefono } from "$lib/utils/string_utils";
   import { toast } from "$lib/toast.svelte";
@@ -208,6 +209,7 @@
       try{
         await invoke("insert_pedido_local", params);
         toast.verde(`Pedido local registrado`);
+        await emit("pedido-creado");//Solo avisamos que se creó un pedido, para que la ventana de ver-ordenes-pendientes se actualice si está abierta
         inicializarDeNuevo();
       }catch(error){
         const err = error as string;
@@ -224,6 +226,7 @@
       try{
         await invoke("insert_pedido_domicilio", params);
         toast.verde(`Pedido domicilio registrado`);
+        await emit("pedido-creado");
         inicializarDeNuevo();
       }catch(error){
         const err = error as string;
@@ -234,6 +237,7 @@
       try{
         await invoke("insert_pedido_recoger", params);
         toast.verde(`Pedido recoger registrado`);
+        await emit("pedido-creado");
         inicializarDeNuevo();
       }catch(error){
         const err = error as string;

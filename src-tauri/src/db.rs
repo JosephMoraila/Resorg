@@ -14,10 +14,31 @@ mod db_platillo_domicilio;
 pub use crate::db::db_platillo_domicilio::*;
 mod db_pedidos_recoger;
 pub use crate::db::db_pedidos_recoger::*;
+mod db_ordenes;
+pub use crate::db::db_ordenes::*;
 
 use crate::path_and_files::obtener_base_path;
 use rusqlite::Connection;
 use std::path::PathBuf;
+
+pub const PAGINACION_50_TAMANO: i8 = 50;
+
+/// Calcula el desplazamiento (`OFFSET`) para la paginación de SQLite 
+/// basándose en el número de página actual (que inicia en 1) y 
+/// un tamaño de página fijo de 50 elementos.
+/// 
+/// Si se recibe un número de página menor o igual a 0, retorna 0 por seguridad.
+/// # Parameters
+/// - `pagina`: Número de página actual (1-indexed).
+/// # Returns
+/// - `i64`: El valor de desplazamiento (`OFFSET`) calculado para la consulta SQL. Ejemplos: Si se pasa 2, retornará 50; si se pasa 3, retornará 100; y así sucesivamente.
+pub fn calcular_offset(pagina: i64) -> i64 {
+    if pagina <= 0 {
+        return 0;
+    }
+    
+    (pagina - 1) * (PAGINACION_50_TAMANO as i64)
+}
 
 pub fn obtener_conexion_db() -> Result<Connection, String> {
     let base_path: PathBuf = obtener_base_path()?;
