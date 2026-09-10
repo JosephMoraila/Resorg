@@ -82,9 +82,14 @@ export function sanitizarInputTelefono(e: Event): string {
  * @param value - El valor a evaluar, que puede ser un string, null o undefined.
  * @returns Un string vacío si el valor es null o undefined, de lo contrario retorna el valor original.
  */
-export function returnEmptyStringIfNullOrUndefined(value: string | null | undefined): string {
-  const result = value ?? '';
-  return result;
+export function returnEmptyStringIfNullOrUndefined(value: string | number | null | undefined): string {
+    if (typeof value === "string") {
+      return value;
+    } else if (typeof value === "number") {
+      return value.toString();
+    } else {
+      return "";
+    }
 }
 
 /**
@@ -110,4 +115,29 @@ export function formatearFechaDB(fechaStr: string): string {
     hour12: false,
   };
   return fecha.toLocaleString(undefined, opciones);
+}
+
+/**
+ * Convierte un number en string y si es null una cadena vacía
+ * @param value Número a verificar o null
+ * @returns Si es null retorna vacio, de lo contario el numero convertido en string
+ */
+export function returnNumberOrNullAsString(value: number | null): string{
+  let devolver = "";
+  if(typeof value == "number"){
+    const numberString = value.toString();
+    devolver = numberString;
+  }
+  return devolver;
+}
+
+/**
+ * Recorta el string sus espacios a los lados en blanco y si es vacio retorna null, sino el string recortado
+ * @param value String a verificar
+ * @returns Recorta el string sus espacios a los lados en blanco y si es vacio retorna null, sino el string recortado
+ */
+export function returnNullOrStringValue(value: string): null | string{
+  const trimValue = value.trim();
+  if(trimValue == "") return null;
+  else return trimValue;
 }

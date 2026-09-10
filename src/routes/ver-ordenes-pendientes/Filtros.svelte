@@ -15,9 +15,10 @@
         filters: FiltrosVerOrdenesProps;
         totalPedidosPendientes: number;
         paginasTotales: number;
+        selectedId: number | null;
     }
 
-    let {pedidosPendientes = $bindable(), filters = $bindable(), totalPedidosPendientes = $bindable(), paginasTotales = $bindable()}:Props = $props();
+    let {pedidosPendientes = $bindable(), selectedId = $bindable(),filters = $bindable(), totalPedidosPendientes = $bindable(), paginasTotales = $bindable()}:Props = $props();
 
     let idInput: number | null = $state<number | null>(null);
     let tipoInput: TipoPedido | "" = $state<TipoPedido | "">("");
@@ -80,6 +81,7 @@
             const dataBckend = await invoke<Pedido[]>("obtener_ordenes", paramsFunc);
             pedidosPendientes = dataBckend;
             filters = paramsFiltro;
+            selectedId = null;
             const resultadosTotalesBackend = await invoke<number>("count_ordenes", paramsCount);
             totalPedidosPendientes = resultadosTotalesBackend;
             paginasTotales = calcularTotalPaginas(totalPedidosPendientes, PAGINA_TAMANO);
@@ -87,6 +89,12 @@
             const err = error as string;
             console.error("Error al obtener los pedidos pendientes:", err);
             toast.rojo(`Error al obtener los pedidos pendientes: ${err}`);
+        }
+    }
+
+    function onEnterDown(event: KeyboardEvent){
+        if(event.key === "Enter"){
+            buscarFiltros();
         }
     }
 </script>
@@ -97,7 +105,7 @@
     </div>
     <div class="flex flex-row items-center gap-0 shrink-0 whitespace-nowrap">
         <span class="mr-2">ID:</span>
-        <input type="number" bind:value={idInput} title="Buscar por ID anula los otros filtros" class="border w-20 rounded-l px-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+        <input type="number" onkeydown={onEnterDown} bind:value={idInput} title="Buscar por ID anula los otros filtros" class="border w-20 rounded-l px-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
         <button onclick={incrementarId} class="border cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700 px-2 ">
             +
         </button>
@@ -116,7 +124,7 @@
     </div>
     <div class="flex flex-row items-center gap-2 shrink-0 whitespace-nowrap">
         <span>Nombre cliente:</span>
-        <input type="text" bind:value={nombreClienteInput} class="border w-40 rounded px-2 shrink-0">
+        <input type="text" onkeydown={onEnterDown} bind:value={nombreClienteInput} class="border w-40 rounded px-2 shrink-0">
     </div>
     <div class="flex flex-row items-center gap-2 shrink-0 whitespace-nowrap">
         <span>Desde:</span>
@@ -126,12 +134,12 @@
     </div>
     <div class="flex flex-row items-center gap-0 shrink-0 whitespace-nowrap">
         <span>Total desde:</span>
-        <input type="number" bind:value={totalDesde} class="border w-20 rounded px-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+        <input type="number" onkeydown={onEnterDown} bind:value={totalDesde} class="border w-20 rounded px-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
         <span>Total hasta:</span>
-        <input type="number" bind:value={totalHasta} class="border w-20 rounded px-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+        <input type="number" onkeydown={onEnterDown} bind:value={totalHasta} class="border w-20 rounded px-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
     </div>
     <div class="flex flex-row items-center gap-0 shrink-0 whitespace-nowrap">
         <span>Nota:</span>
-        <input type="text" bind:value={nota} class="border w-40 rounded px-2 shrink-0">
+        <input type="text" onkeydown={onEnterDown} bind:value={nota} class="border w-40 rounded px-2 shrink-0">
     </div>
 </div>

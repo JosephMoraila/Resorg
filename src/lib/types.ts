@@ -52,6 +52,7 @@ export interface PlatilloPedido{
 export type EstadoPedido = "Pendiente" | "Finalizado" | "Cancelado" | "Entregado" | "Cobrado";
 
 export interface PedidoLocal{
+  tipo: "Local";
   id: number;
   piso: number;
   mesa: number;
@@ -60,6 +61,7 @@ export interface PedidoLocal{
 }
 
 export interface PedidoDomicilio{
+  tipo: "Domicilio"
   id: number;
   colonia: string | null;
   calle: string | null;
@@ -70,6 +72,7 @@ export interface PedidoDomicilio{
 }
 
 export interface PedidoRecoger{
+  tipo: "Recoger"
   id: number;
   pedido_id: number;
 }

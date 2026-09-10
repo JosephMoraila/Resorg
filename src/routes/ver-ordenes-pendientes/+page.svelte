@@ -8,7 +8,7 @@
     import { calcularTotalPaginas } from "$lib/utils/math_utils";
     import { listen } from "@tauri-apps/api/event";
     import Filtros from "./Filtros.svelte";
-
+    import BotonesVerMas from "./BotonesVerMas.svelte";
 
     let paginaActual = $state(1);  
     let filters: FiltrosVerOrdenesProps = $state({id: null, estatus: "Pendiente", fechaFin: null, fechaInicio: null, nombreCliente: null, nota: null, tipoPedido: null, totalDesde: null, totalHasta: null});
@@ -29,6 +29,7 @@
         try{
             const params = { paginaFrontend: pagina, ...filtros };
             const response = await invoke<Pedido[]>("obtener_ordenes", params);
+            console.log(response);
             pedidosPendientes = response;
         } catch (error) {
             const err = error as string;
@@ -82,7 +83,8 @@
 
 <main class="min-h-screen w-full bg-white dark:bg-black text-black dark:text-white flex flex-col items-center overflow-x-hidden">
 
-    <Filtros bind:pedidosPendientes={pedidosPendientes} bind:filters={filters} bind:totalPedidosPendientes={totalPedidosPendientes} bind:paginasTotales={paginasTotales}/>
+    <Filtros bind:selectedId={selectedId} bind:pedidosPendientes={pedidosPendientes} bind:filters={filters} bind:totalPedidosPendientes={totalPedidosPendientes} bind:paginasTotales={paginasTotales}/>
+    <BotonesVerMas totalPedidosPendientes={totalPedidosPendientes} selectedId={selectedId} pedidosPendientes={pedidosPendientes}/>
 
     <div class="w-full overflow-x-auto border-y border-gray-200 dark:border-gray-800 shadow-sm">
         <table class="tabla-estilizada">
@@ -117,9 +119,9 @@
 
     <div class="flex flex-row justify-center items-center mt-4 space-x-3.5">
         
-        <button class="btn-realista disabled:opacity-50 disabled:cursor-not-allowed" onclick={irPaginaAnterior} disabled={paginaActual === 1}>Anterior</button>
+        <button class="btn-realista disabled:opacity-50 disabled:cursor-not-allowed!" onclick={irPaginaAnterior} disabled={paginaActual === 1}>Anterior</button>
         <span>{paginaActual} de {paginasTotales}</span>
-        <button class="btn-realista disabled:opacity-50 disabled:cursor-not-allowed" onclick={irPaginaSiguiente} disabled={paginaActual === paginasTotales}>Ver más</button>
+        <button class="btn-realista disabled:opacity-50 disabled:cursor-not-allowed!" onclick={irPaginaSiguiente} disabled={paginaActual === paginasTotales}>Ver más</button>
 
     </div>
 

@@ -38,3 +38,14 @@ export function parsearNumeroOpcional(valor: string | null | undefined): number 
     const numero = Number(valor);
     return Number.isNaN(numero) ? null : numero;
 }
+
+/**
+ * Convierte un valor string que se espera sean numeros a un tipo number de tipo Int
+ * @param valor String que se espera sean números
+ * @returns Number tipo Int o null si es algo no esperado
+ */
+export function parsearStringToInt(valor: string): number | null{
+    const valorInt = parseInt(valor);
+    const valorFinal = Number.isNaN(valorInt) ? null : valorInt;
+    return valorFinal;
+}

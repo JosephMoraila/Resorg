@@ -97,7 +97,6 @@ pub fn inicializar_tablas() -> Result<(), String> {
             category_id INTEGER,
             pedido_id INTEGER NOT NULL,
             FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE
-            FOREIGN KEY (platillo_id) REFERENCES food_platillos(id)
         );
 
         CREATE TABLE IF NOT EXISTS pedidos_local(
