@@ -134,29 +134,34 @@
                 toast.amarillo(`Selecciona un mesero`);
                 return;  
             }
-            const pisoObj = {piso};
-            const mesObj = {mesa};
-            const params = {...mesObj, ...pisoObj};
-            try{
-                const isPisoExiste = await invoke<boolean>("is_piso_exists", pisoObj);
-                if(!isPisoExiste){
-                    toast.amarillo(`El piso ${piso} no está registrado`);
+            // Si el pedido original ya era Local y no se cambió ni el piso ni la mesa,
+            // no hace falta validar existencia/ocupación (la mesa ya le pertenece a este pedido)
+            const esMismaMesaYPiso = originalPedido.info_tipo_pedido.tipo == "Local" && originalPedido.info_tipo_pedido.mesa === mesa && originalPedido.info_tipo_pedido.piso === piso;
+            if (!esMismaMesaYPiso) {
+                const pisoObj = {piso};
+                const mesObj = {mesa};
+                const params = {...mesObj, ...pisoObj};
+                try{
+                    const isPisoExiste = await invoke<boolean>("is_piso_exists", pisoObj);
+                    if(!isPisoExiste){
+                        toast.amarillo(`El piso ${piso} no está registrado`);
+                        return;
+                    }
+                    const isMesaExiste = await invoke<boolean>("is_mesa_exists", mesObj);
+                    if(!isMesaExiste){
+                        toast.amarillo(`La mesa ${mesa} no está registrada`);
+                        return;
+                    }
+                    const isOcupada = await invoke<boolean>("is_mesa_ocupada", params);
+                    if(isOcupada){
+                        toast.amarillo(`Esa mesa ya está ocupada`);
+                        return;
+                    }
+                }catch(error){
+                    const err = error as string;
+                    toast.rojo(`Error al verificar ocupamiento de mesa o su existencia: ${err}`);
                     return;
                 }
-                const isMesaExiste = await invoke<boolean>("is_mesa_exists", mesObj);
-                if(!isMesaExiste){
-                    toast.amarillo(`La mesa ${mesa} no está registrada`);
-                    return;
-                }
-                const isOcupada = await invoke<boolean>("is_mesa_ocupada", params);
-                if(isOcupada){
-                    toast.amarillo(`Esa mesa ya está ocupada`);
-                    return;
-                }
-            }catch(error){
-                const err = error as string;
-                toast.rojo(`Error al verificar ocupamiento de mesa o su existencia: ${err}`);
-                return;
             }
             
             const nuevoInfoTipoPedido: PedidoLocal = {pedido_id: originalPedidoId, mesa, piso,mesero: meseroSeleccionado,id: sameOrZeroId,tipo: "Local"};
@@ -210,10 +215,8 @@
                 <div class="flex flex-col">
                     <label for="estado" class="text-sm text-gray-500 dark:text-gray-400 mt-1 block">Estado</label>
                     <label><input type="radio" name="estadoPedido" value="Pendiente" bind:group={estadoPedido} />Pendiente</label>
-                    <label><input type="radio" name="estadoPedido" value="Finalizado" bind:group={estadoPedido} />Finalizado</label>
                     <label><input type="radio" name="estadoPedido" value="Cancelado" bind:group={estadoPedido} />Cancelado</label>
                     <label><input type="radio" name="estadoPedido" value="Entregado" bind:group={estadoPedido} />Entregado</label>
-                    <label><input type="radio" name="estadoPedido" value="Cobrado" bind:group={estadoPedido} />Cobrado</label>
                 </div>
 
                 <div class="flex flex-col">

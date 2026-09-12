@@ -21,9 +21,9 @@
 
 </script>
 
-<main class="w-screen h-screen">
+<main class="w-full h-screen flex flex-col overflow-hidden">
   <Menubar />
-  <div class="h-full w-full bg-white dark:bg-black">
+  <div class="flex-1 w-full bg-white dark:bg-black overflow-auto">
 
     <div>
       <button class="btn-realista" onclick={onRegistrarOrden}>Registrar orden</button>
