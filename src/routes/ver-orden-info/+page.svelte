@@ -6,6 +6,8 @@
     import { formatearMoneda, returnEmptyStringIfNullOrUndefined, formatearFechaDB } from "$lib/utils/string_utils";
     import { HayAlMenosUnPlatilloExistente, HayAlMenosUnaDescripcionNoNullPlatilloOriginal, GetDescripcionPlatilloOriginal } from "$lib/utils/object_utils";
     import ModalCambiarInfoOrden from "$lib/components/modals/ModalCambiarInfoOrden.svelte";
+    import { toast } from "$lib/toast.svelte";
+    import { emit } from "@tauri-apps/api/event";
     
     let pedido = $state<Pedido | null>(null);
     let selectedId: number | null = $state<number | null>(null);
@@ -32,8 +34,25 @@
     function onAbrirModal(){
         isAbrirModal = true;
     }
-    async function onGuardadCambios(pedido: Pedido){
-        console.log(pedido);
+    async function onGuardadCambios(pedidoParam: Pedido){
+        if(!pedido) return;
+        const params = {pedido: pedidoParam};
+        //Si bien pedido ya contiene la información actualizada, en el caso que se cambie su tipo de orden no contiene realmente el nuevo ID de registro de su nueva tabla de tipo y por eso ese invoke lo retorna ya con ese ID en caso que se haya cambiado su tipo
+        try{
+            const newInfoPedido = await invoke<Pedido>("update_pedido", params);
+            Object.assign(pedido, structuredClone(newInfoPedido));
+            isAbrirModal = false;
+            //Guardamos en Rust su nuevo valor por si se actualiza no se vuelva a cargar con la información anterior
+            const value = `ver-orden-info-${newInfoPedido.id}`;
+            const paramsRam = {clave:value, valor: newInfoPedido};
+            await invoke("guardar_pedido_compartido", paramsRam);
+            toast.verde(`Pedido actualizado correctamente`);
+            await emit("pedido-creado");//Si esta la ventana de ver ordenes pendientes esta abierta actualizar
+        }catch(err){
+            const error = err as string;
+            toast.rojo(`Error al actualizar pedido: ${error}`);
+        }
+
     }
 </script>
 

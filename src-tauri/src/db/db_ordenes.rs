@@ -1,7 +1,6 @@
-use std::{fmt::{self, write}, result};
+use std::{fmt::{self}};
 
-use rusqlite::{Connection, params, ToSql};
-use tauri::utils::acl::identifier;
+use rusqlite::{Connection, ToSql};
 use crate::db::{PAGINACION_50_TAMANO, Platillo, calcular_offset, obtener_conexion_db, get_platillo_by_id};
 use serde::{Deserialize, Serialize};
 use crate::utils::{descapitalizar, capitalizar, convertir_local_a_utc};
@@ -24,7 +23,6 @@ pub struct PedidoPlatillo{
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PedidoLocal{
-    pub tipo: TipoPedido,
     pub id: u64,
     pub piso: i64,
     pub mesa: u64,
@@ -34,7 +32,6 @@ pub struct PedidoLocal{
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PedidoDomicilio{
-    pub tipo: TipoPedido,
     pub id: u64,
     pub colonia: Option<String>,
     pub calle: Option<String>,
@@ -46,20 +43,21 @@ pub struct PedidoDomicilio{
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PedidoRecoger{
-    pub tipo: TipoPedido,
     pub id: u64,
     pub pedido_id: u64
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(untagged)]
+#[serde(tag = "tipo")]
 pub enum InfoTipoPedido {
+    #[serde(rename = "Local")]
     PedidoLocal(PedidoLocal),
+    #[serde(rename = "Domicilio")]
     PedidoDomicilio(PedidoDomicilio),
+    #[serde(rename = "Recoger")]
     PedidoRecoger(PedidoRecoger),
 }
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub enum TipoPedido{
     Local, Domicilio, Recoger
 }
@@ -105,22 +103,22 @@ pub struct Pedido{
 }
 
 impl Pedido {
-    ///Retirna un enum con struct vacio dependiendo del tipo de pedido, ya sea local, domicilio o recoger
+    ///Retorna un enum con struct vacio dependiendo del tipo de pedido, ya sea local, domicilio o recoger
     /// # Arguments
     /// * `info_tipo_pedido_str` - Un string que representa el tipo de pedido
     /// # Returns
     /// * `InfoTipoPedido` - Un enum que contiene un struct vacío correspondiente
     fn create_new_info_tipo_pedido_by_name(info_tipo_pedido_str: &str)->InfoTipoPedido{
         if info_tipo_pedido_str == "local" || info_tipo_pedido_str == "Local"{
-            InfoTipoPedido::PedidoLocal(PedidoLocal{id: 0, piso: 0, mesa: 0, mesero: String::new(), pedido_id: 0, tipo: TipoPedido::Local})
+            InfoTipoPedido::PedidoLocal(PedidoLocal{id: 0, piso: 0, mesa: 0, mesero: String::new(), pedido_id: 0})
         }else if info_tipo_pedido_str == "domicilio" || info_tipo_pedido_str == "Domicilio"{
-            InfoTipoPedido::PedidoDomicilio(PedidoDomicilio{id: 0, colonia: None, calle: None, numero_interior_exterior: None, telefono: None, repartidor: None, pedido_id: 0, tipo: TipoPedido::Domicilio})
+            InfoTipoPedido::PedidoDomicilio(PedidoDomicilio{id: 0, colonia: None, calle: None, numero_interior_exterior: None, telefono: None, repartidor: None, pedido_id: 0})
         }else{
-            InfoTipoPedido::PedidoRecoger(PedidoRecoger{id: 0, pedido_id: 0, tipo: TipoPedido::Recoger})
+            InfoTipoPedido::PedidoRecoger(PedidoRecoger{id: 0, pedido_id: 0})
         }
     }
 
-    fn create_new_tipo_pedido_by_name(info_tipo_pedido_str: &str)->TipoPedido{
+    pub fn create_new_tipo_pedido_by_name(info_tipo_pedido_str: &str)->TipoPedido{
         if info_tipo_pedido_str == "local" || info_tipo_pedido_str == "Local"{
             TipoPedido::Local
         }else if info_tipo_pedido_str == "domicilio" || info_tipo_pedido_str == "Domicilio"{
@@ -143,6 +141,9 @@ impl Pedido {
             EstadoPedido::Cobrado
         }
     }
+
+
+
 }
 
 #[tauri::command]
@@ -237,15 +238,12 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
         }
     }
 
-    //Finalmente poner el ORDER BY y el limit y offset
-    let final_string = format!("ORDER BY fecha_hora_pedido DESC LIMIT ?{} OFFSET ?{}", numero_parametro, numero_parametro+1);
-    
     let where_clause: String = if vec_campos_where.is_empty() {
         String::new()
     } else {
         format!("WHERE {}", vec_campos_where.join(" AND ")) //AND no se pone al inicio ni al final porque se pone entre elementos
     };
-
+    //Finalmente poner el ORDER BY y el limit y offset
     let final_string = format!("ORDER BY fecha_hora_pedido DESC LIMIT ?{} OFFSET ?{}", numero_parametro, numero_parametro + 1);
 
     comando = format!("{} {} {}", comando, where_clause, final_string);
@@ -441,7 +439,7 @@ fn obetener_info_tipo_pedido_by_pedido_id(pedido_id: u64, tipo_pedido: &TipoPedi
                 let piso: i64 = row.get::<&str, i64>("piso")?;
                 let mesa: i64 = row.get::<&str, i64>("mesa")?;
                 let mesero: String = row.get::<&str, String>("mesero")?;
-                let pedido_local = PedidoLocal{id: identifier_i64 as u64, piso: piso, mesa: mesa as u64, mesero: mesero, pedido_id: pedido_id, tipo: TipoPedido::Local};
+                let pedido_local = PedidoLocal{id: identifier_i64 as u64, piso: piso, mesa: mesa as u64, mesero: mesero, pedido_id: pedido_id};
                 Ok(pedido_local)
             });
             match res {
@@ -458,7 +456,7 @@ fn obetener_info_tipo_pedido_by_pedido_id(pedido_id: u64, tipo_pedido: &TipoPedi
                 let colonia: Option<String> = row.get::<&str, Option<String>>("colonia")?;
                 let telefono: Option<String> = row.get::<&str, Option<String>>("telefono")?;
                 let repartidor: Option<String> = row.get::<&str, Option<String>>("repartidor")?;
-                let pedido_domicilio = PedidoDomicilio{pedido_id: pedido_id, id: identifier_i64 as u64, calle, numero_interior_exterior, colonia, telefono, repartidor, tipo: TipoPedido::Domicilio};
+                let pedido_domicilio = PedidoDomicilio{pedido_id: pedido_id, id: identifier_i64 as u64, calle, numero_interior_exterior, colonia, telefono, repartidor};
                 Ok(pedido_domicilio)
             });
             match res {
@@ -470,7 +468,7 @@ fn obetener_info_tipo_pedido_by_pedido_id(pedido_id: u64, tipo_pedido: &TipoPedi
             let comando : &str = "SELECT id FROM pedidos_recoger WHERE pedido_id = ?";
             let res: Result<PedidoRecoger, rusqlite::Error> = conn.query_row(comando, params, |row|{
                 let identifier_i64: i64 = row.get::<&str, i64>("id")?;
-                let pedido_recoger = PedidoRecoger{id: identifier_i64 as u64, pedido_id: pedido_id, tipo: TipoPedido::Recoger};
+                let pedido_recoger = PedidoRecoger{id: identifier_i64 as u64, pedido_id: pedido_id};
                 Ok(pedido_recoger)
             });
             match res {
@@ -484,7 +482,7 @@ fn obetener_info_tipo_pedido_by_pedido_id(pedido_id: u64, tipo_pedido: &TipoPedi
 }
 
 #[tauri::command]
-pub fn guardar_pedido_compartido(clave: String, valor: Pedido, pedido: State<'_, PedidoCompartido>)-> Result<(), String> {
+pub fn guardar_pedido_compartido(clave: String, valor: Pedido, pedido: State<'_, PedidoCompartido>) -> Result<(), String> {
     let resultado_lock = pedido.0.lock();
     let mut mapa = resultado_lock.map_err(|e| e.to_string())?;
     mapa.insert(clave, valor);
