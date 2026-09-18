@@ -41,6 +41,7 @@ export interface Mesero{
 
 export type TipoPedido = "Local" | "Domicilio" | "Recoger";
 
+/** Interface de un platillo que sea desea ordenar, NO es historico, solo es al ordenar*/
 export interface PlatilloPedido{
   id_platillo: number;
   id_category: null | number;
@@ -77,6 +78,7 @@ export interface PedidoRecoger{
   pedido_id: number;
 }
 
+/** Interface de un platillo pedido de manera historica*/
 export interface PedidoPlatillo{
   id: number;
   name: string;
@@ -107,4 +109,21 @@ export interface FiltrosVerOrdenesProps{
   totalDesde: null | number; totalHasta: null | number;
   nota: null | string;
   estatus: null | EstadoPedido;
+}
+
+export interface FilaPlatillo {
+    id: string;
+    nombre: string;
+    id_platillo: number | null;
+    id_category: null | number;
+    cantidad: number;
+  }
+
+export interface UpdatePlatilloPedido{
+  /**Si es null significa que el nuevo platillo a pedir es uno adicional, si contiene valor significa que conserva el ID de la DB y significa que no se eliminó ni agregó uno*/
+  id_platillo_pedido_original: number | null;
+  id_platillo: number;
+  id_category: null | number;
+  cantidad: number;
+  pedido_id: number;
 }

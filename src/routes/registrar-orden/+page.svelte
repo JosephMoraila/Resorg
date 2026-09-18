@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { emit } from "@tauri-apps/api/event";
-  import type { TipoPedido, Platillo, PlatilloCategoria, Mesero, PlatilloPedido } from "$lib/types";
+  import type { TipoPedido, Platillo, PlatilloCategoria, Mesero, PlatilloPedido, FilaPlatillo } from "$lib/types";
   import { sanitizarInputTelefono } from "$lib/utils/string_utils";
   import { toast } from "$lib/toast.svelte";
 
@@ -13,14 +13,6 @@
   let meseroSeleccionado = $state("");
 
   let platillos: PlatilloCategoria[] = $state([]);
-
-  interface FilaPlatillo {
-    id: string;
-    nombre: string;
-    id_platillo: number | null;
-    id_category: null | number;
-    cantidad: number;
-  }
 
   let filas: FilaPlatillo[] = $state([
     { id: crypto.randomUUID(), nombre: "", id_platillo: null, id_category: null, cantidad: 1 },
@@ -54,11 +46,21 @@
   }
 
   onMount(async () => {
-    const platillosBackend = await invoke<PlatilloCategoria[]>("get_categories_platillo");
-    platillos = platillosBackend;
+    try{
+      const platillosBackend = await invoke<PlatilloCategoria[]>("get_categories_platillo");
+      platillos = platillosBackend;
+    }catch(err){
+      const error = err as string;
+      toast.rojo(`Error al conseguir platillos de base de datos: ${error}`);
+    }
 
-    const meserosBackend = await invoke<Mesero[]>("get_meseros");
-    meseros = meserosBackend;
+    try{
+      const meserosBackend = await invoke<Mesero[]>("get_meseros");
+      meseros = meserosBackend;
+    }catch(err){
+      const error = err as string;
+      toast.rojo(`Error al conseguir meseros de base de datos: ${error}`);
+    }
   });
 
   function agregarFila() {
@@ -263,7 +265,7 @@
   }
 </script>
 
-<main class="min-h-screen w-screen text-black dark:text-white bg-white dark:bg-black flex flex-col items-center pt-10">
+<main class="min-h-screen w-screen text-black dark:text-white bg-white dark:bg-black flex flex-col items-center justify-center pt-10">
   <div class="flex flex-col items-center w-1/2">
     <p class="text-center mb-1 text-xl font-bold">Platillo o categoría</p>
 

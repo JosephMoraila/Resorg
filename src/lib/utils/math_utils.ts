@@ -49,3 +49,14 @@ export function parsearStringToInt(valor: string): number | null{
     const valorFinal = Number.isNaN(valorInt) ? null : valorInt;
     return valorFinal;
 }
+
+/**
+ * Verifica si un número entero es positivo y mayor a 0 y en caso que tenga decimales lo trunca a entero. Si es 0 o negativo esta funcion retorna 1
+ * @param numero Número a evaluar
+ * @returns Entero positivo
+ */
+export function TruncarToEnteroPositivo(numero: number): number{
+    const cant = numero && numero > 0 ? numero : 1; //Si numero es true (negativo tambien da true excepto 0) y es mayor a 0 da el numero, sino da 1
+    const truncado = Math.trunc(cant); //Si el numero original tiene algun decimal lo cortamos y lo dejamos en entero
+    return truncado;
+}

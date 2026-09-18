@@ -141,3 +141,13 @@ export function returnNullOrStringValue(value: string): null | string{
   if(trimValue == "") return null;
   else return trimValue;
 }
+
+/**
+ * Evalua si el texto contiene solo números
+ * @param texto Texto a evaluar
+ * @returns False si contiene cosas que no sean números incluyendo espacios
+ */
+export function isContieneSoloNumeros(texto: string): boolean{
+  const isOnlyNumbers = /^\d+$/.test(texto);
+  return isOnlyNumbers;
+}

@@ -11,6 +11,7 @@ use tauri::State;
 pub struct PedidoCompartido(pub Mutex<HashMap<String, Pedido>>);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+///Struct de un platillo pedido de manera historica
 pub struct PedidoPlatillo{
     pub id: u64,
     pub name: String,
@@ -395,7 +396,7 @@ pub fn count_ordenes(id: Option<u64>,tipo_pedido: Option<TipoPedido>,nombre_clie
     Ok(count)
 }
 
-fn obtener_platillos_pedidos_by_pedido_id(pedido_id: u64) -> Result<Vec<PedidoPlatillo>, String> {
+pub fn obtener_platillos_pedidos_by_pedido_id(pedido_id: u64) -> Result<Vec<PedidoPlatillo>, String> {
     let conn: Connection = obtener_conexion_db()?;
     let mut platillos: Vec<PedidoPlatillo> = Vec::new();
     let comando: &str = "SELECT id, name, precio, platillo_id, category_id FROM platillos_pedidos WHERE pedido_id = ?";

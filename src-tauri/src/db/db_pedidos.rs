@@ -4,6 +4,7 @@ use rusqlite::{Connection};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+///Struct de un platillo que sea desea ordenar, NO es historico, solo es al ordenar
 pub struct PlatilloPedido{
     pub id_platillo: u64,
     pub id_category: Option<u64>,

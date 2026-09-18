@@ -18,6 +18,8 @@ mod db_ordenes;
 pub use crate::db::db_ordenes::*;
 mod db_change_orden_info;
 pub use crate::db::db_change_orden_info::*;
+mod db_change_orden_platillos;
+pub use crate::db::db_change_orden_platillos::*;
 
 use crate::path_and_files::obtener_base_path;
 use rusqlite::Connection;
