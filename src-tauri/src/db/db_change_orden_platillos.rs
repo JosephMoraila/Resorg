@@ -76,11 +76,13 @@ pub fn update_platillos_orden(platillos_actualizado_param: Vec<UpdatePlatilloPed
     for pap in &platillos_actualizado_param{
         //
         if let Some(n) = pap.id_platillo_pedido_original{
-            ids_mantener_frondend.push(n);
+            ids_mantener_frondend.push(n); //Siempre es uno en su cantidad cuando es cantidad
         }else{//Si es NONE entonces agregar un nuevo platillo pedido
-            let platillo_struct_opt: Option<Platillo> = get_platillo_by_id(pap.id_platillo)?; //Tomamos su ID y tomamos su platillo
-            if let Some(platillo_struct_some) = platillo_struct_opt{
-                platillos_nuevos.push(platillo_struct_some);
+            for _ in 0..pap.cantidad{//Iteramos la cantidad de veces en cantidad
+                let platillo_struct_opt: Option<Platillo> = get_platillo_by_id(pap.id_platillo)?; //Tomamos su ID y tomamos su platillo
+                if let Some(platillo_struct_some) = platillo_struct_opt{
+                    platillos_nuevos.push(platillo_struct_some);
+                }
             }
         }
     }
