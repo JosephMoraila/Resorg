@@ -3,7 +3,7 @@
     import type { EstadoPedido, Pedido, FiltrosVerOrdenesProps } from "$lib/types";
     import { invoke } from "@tauri-apps/api/core";
     import { toast } from "$lib/toast.svelte";
-    import { formatearMoneda, returnEmptyStringIfNullOrUndefined, formatearFechaDB } from "$lib/utils/string_utils";
+    import { formatearMoneda, returnEmptyStringIfNullOrUndefined, formatearFechaDB, obtenerTextoTipoPedido } from "$lib/utils/string_utils";
     import { onMount } from "svelte";
     import { calcularTotalPaginas } from "$lib/utils/math_utils";
     import { listen } from "@tauri-apps/api/event";
@@ -84,7 +84,7 @@
 <main class="min-h-screen w-full bg-white dark:bg-black text-black dark:text-white flex flex-col items-center overflow-x-hidden">
 
     <Filtros bind:selectedId={selectedId} bind:pedidosPendientes={pedidosPendientes} bind:filters={filters} bind:totalPedidosPendientes={totalPedidosPendientes} bind:paginasTotales={paginasTotales}/>
-    <BotonesVerMas totalPedidosPendientes={totalPedidosPendientes} selectedId={selectedId} pedidosPendientes={pedidosPendientes}/>
+    <BotonesVerMas totalPedidosPendientes={totalPedidosPendientes} selectedId={selectedId} pedidosPendientes={pedidosPendientes} obtenerPedidosPendientes={obtenerPedidosPendientes} obtenerCountPedidosPendientes={obtenerCountPedidosPendientes}/>
 
     <div class="w-full overflow-x-auto border-y border-gray-200 dark:border-gray-800 shadow-sm">
         <table class="tabla-estilizada">
@@ -104,7 +104,7 @@
                     <tr class="tabla-tr cursor-pointer {selectedId === pedido.id ? 'dark:bg-blue-900 dark:text-white bg-blue-400' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}" onclick={() => selectedId = pedido.id}>
                         <td class="tabla-td-primary">{pedido.id}</td>
                         <td class="tabla-td text-gray-800 dark:text-gray-200">{formatearMoneda(pedido.total)}</td>
-                        <td class="tabla-td">{pedido.tipo}</td>
+                        <td class="tabla-td">{obtenerTextoTipoPedido(pedido.tipo)}</td>
                         <td class="py-3 px-4">
                             <span class="tabla-badge">{pedido.estado}</span>
                         </td>

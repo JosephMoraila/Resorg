@@ -1,3 +1,5 @@
+import type { TipoPedido, EstadoPedido } from "$lib/types";
+
 /**
  * Formatea un string/entrada para que solo acepte números, Se usa en inputs de tipo texto para que el usuario pueda escribir libremente, pero el valor final se formatea como moneda.
  * añade comas cada 3 dígitos y limita a máximo 2 decimales.
@@ -79,7 +81,7 @@ export function sanitizarInputTelefono(e: Event): string {
 
 /**
  * Retorna un string vacío si el valor es null o undefined, de lo contrario retorna el valor original.
- * @param value - El valor a evaluar, que puede ser un string, null o undefined.
+ * @param value - El valor a evaluar, que puede ser un string, number, null o undefined.
  * @returns Un string vacío si el valor es null o undefined, de lo contrario retorna el valor original.
  */
 export function returnEmptyStringIfNullOrUndefined(value: string | number | null | undefined): string {
@@ -150,4 +152,32 @@ export function returnNullOrStringValue(value: string): null | string{
 export function isContieneSoloNumeros(texto: string): boolean{
   const isOnlyNumbers = /^\d+$/.test(texto);
   return isOnlyNumbers;
+}
+
+/**
+ * Obtener texto de tipo pedido
+ * @param tipoPedido El tipo de pedido que puede ser Domicilio, Local o Recoger
+ * @returns Domicilio, Local o Recoger
+ */
+export function obtenerTextoTipoPedido(tipoPedido: TipoPedido): string{
+  let texto = "";
+  if(tipoPedido == "Domicilio") texto = "Domicilio";
+  else if(tipoPedido == "Local") texto = "Local";
+  else if (tipoPedido == "Recoger") texto = "Recoger"
+  return texto;
+}
+
+/**
+ * Obtener texto de estado pedido
+ * @param estadoPedido El estado de pedido que puede ser "Pendiente" | "Finalizado" | "Cancelado" | "Entregado" | "Cobrado"
+ * @returns "Pendiente" | "Finalizado" | "Cancelado" | "Entregado" | "Cobrado"
+ */
+export function obtenerTextoEstadoPedido(estadoPedido: EstadoPedido): string{
+  let texto = "";
+  if(estadoPedido == "Cancelado") texto = "Cancelado";
+  else if(estadoPedido == "Cobrado") texto = "Cobrado";
+  else if(estadoPedido == "Entregado") texto = "Entregado";
+  else if(estadoPedido == "Finalizado") texto = "Finalizado";
+  else if(estadoPedido == "Pendiente") texto = "Pendiente";
+  return texto;
 }

@@ -3,7 +3,7 @@
     import { getCurrentWindow} from "@tauri-apps/api/window";
     import { onMount } from "svelte";
     import type { Pedido, PedidoPlatillo, UpdatePlatilloPedido } from "$lib/types";
-    import { formatearMoneda, returnEmptyStringIfNullOrUndefined, formatearFechaDB } from "$lib/utils/string_utils";
+    import { formatearMoneda, returnEmptyStringIfNullOrUndefined, formatearFechaDB, obtenerTextoTipoPedido, obtenerTextoEstadoPedido } from "$lib/utils/string_utils";
     import { HayAlMenosUnPlatilloExistente, HayAlMenosUnaDescripcionNoNullPlatilloOriginal, GetDescripcionPlatilloOriginal } from "$lib/utils/object_utils";
     import ModalCambiarInfoOrden from "$lib/components/modals/ModalCambiarInfoOrden.svelte";
     import { toast } from "$lib/toast.svelte";
@@ -90,11 +90,11 @@
     {#if pedido}
         <div class="flex flex-row items-center gap-4 flex-nowrap overflow-x-auto pb-2 w-full max-w-full">
             {#if pedido.tipo == "Local"}
-                <span><strong>Tipo:</strong> Local</span>
+                <span><strong>Tipo:</strong> {obtenerTextoTipoPedido(pedido.tipo)}</span>
             {:else if pedido.tipo == "Domicilio"}
-                <span><strong>Tipo:</strong> Domicilio</span>
+                <span><strong>Tipo:</strong> {obtenerTextoTipoPedido(pedido.tipo)}</span>
             {:else if pedido.tipo == "Recoger"}
-                <span><strong>Tipo:</strong> Recoger</span>
+                <span><strong>Tipo:</strong> {obtenerTextoTipoPedido(pedido.tipo)}</span>
             {/if}
             <span>|</span>
             <span><strong>Orden ID:</strong> {pedido.id}</span>
@@ -104,15 +104,15 @@
             <span><strong>Total:</strong> {formatearMoneda(pedido.total)}</span>
             <span>|</span>
             {#if pedido.estado == "Pendiente"}
-                <span><strong>Estado:</strong> Pendiente</span>
+                <span><strong>Estado:</strong> {obtenerTextoEstadoPedido(pedido.estado)}</span>
             {:else if pedido.estado == "Cancelado"}
-                <span><strong>Estado:</strong> Cancelado</span>
+                <span><strong>Estado:</strong> {obtenerTextoEstadoPedido(pedido.estado)}</span>
             {:else if pedido.estado == "Cobrado"}
-                <span><strong>Estado:</strong> Cobrado</span>
+                <span><strong>Estado:</strong> {obtenerTextoEstadoPedido(pedido.estado)}</span>
             {:else if pedido.estado == "Entregado"}
-                <span><strong>Estado:</strong> Entregado</span>
+                <span><strong>Estado:</strong> {obtenerTextoEstadoPedido(pedido.estado)}</span>
             {:else if pedido.estado == "Finalizado"}
-                <span><strong>Estado:</strong> Finalizado</span>
+                <span><strong>Estado:</strong> {obtenerTextoEstadoPedido(pedido.estado)}</span>
             {/if}
             <span>|</span>
             <span><strong>Nota:</strong> {returnEmptyStringIfNullOrUndefined(pedido.nota)}</span>
