@@ -127,3 +127,32 @@ export interface UpdatePlatilloPedido{
   cantidad: number;
   pedido_id: number;
 }
+
+//Ticket
+
+export interface TextCanvasElement{
+  tipo: "Texto";
+  texto: string;
+  size: number;
+  is_under_info: boolean;
+}
+
+export interface ImageCanvasElement{
+  tipo: "Imagen";
+  src: string;
+  alto: number;
+  ancho: number;
+}
+
+export interface InfoCanvasElement{
+  tipo: "Info";
+  texto: string;
+  size: number;
+}
+
+export interface CanvasElement{
+  id: number;
+  x: number;
+  y: number;
+  element: TextCanvasElement | ImageCanvasElement | InfoCanvasElement;
+}

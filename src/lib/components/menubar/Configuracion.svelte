@@ -10,6 +10,7 @@
     "registrar-mesas": {title: "Registrar mesas", url: "/registrar-mesas", height: 800, width: 800, },
     "meseros": {title: "Meseros", url: "/meseros", height: 800, width: 800,},
     "impresora": {title: "Impresora", url: "/impresora", height: 800, width: 800},
+    "ticket": {title: "Ticket", url: "/ticket", height: 800, width: 800},
   };
 
   const menuOptions: { value: string; label: string; suboptions: { value: string; label: string }[] }[] = [
@@ -31,7 +32,7 @@
     {
       value: "impresora",
       label: "Ticket",
-      suboptions: [{label: "Impresora", value: "impresora"}]
+      suboptions: [{label: "Impresora", value: "impresora"}, {label:"Ticket", value: "ticket"}]
     }
 
   ] as const;
