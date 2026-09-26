@@ -1,5 +1,7 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, onDestroy } from "svelte";
+    import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+    import { convertFileSrc } from "@tauri-apps/api/core";
 
     interface Props {
         width: number;
@@ -22,7 +24,7 @@
 
     onMount(() => {
         if (contentEditableEl) {
-            contentEditableEl.innerHTML = contenidoEscPos; // 👈 solo se escribe UNA vez, al montar
+            contentEditableEl.innerHTML = contenidoEscPos; // solo se escribe UNA vez, al montar
         }
     });
 
@@ -43,7 +45,7 @@
 
     function sincronizarEstado() {
         if (!contentEditableEl) return;
-        contenidoEscPos = contentEditableEl.innerHTML; // 👈 solo lectura DOM -> variable, nunca al revés
+        contenidoEscPos = contentEditableEl.innerHTML; // solo lectura DOM -> variable, nunca al revés
     }
 
     function protegerEstructura() {
@@ -113,6 +115,75 @@
         sincronizarEstado();
     }
 
+    let unlisten: (() => void) | null = null;
+    onMount(async () => {
+        const currentWebView = getCurrentWebviewWindow();
+        
+        unlisten = await currentWebView.onDragDropEvent(event => {
+            if (event.payload.type === "drop" && event.payload.paths.length > 0) {
+                const rutaFisica = event.payload.paths[0];
+                const imgUrl = convertFileSrc(rutaFisica);
+                
+                // Coordenadas globales de la ventana
+                const dropX = event.payload.position.x;
+                const dropY = event.payload.position.y;
+                
+                const imageClass = new Image();
+                
+                imageClass.onload = () => {
+
+                    // MODO ESCPOS: Convertir coordenadas en una posición de texto
+                    let rango = null;
+                    
+                    // Intentar usar el estándar moderno primero
+                    if (document.caretPositionFromPoint) {
+                        const posicion = document.caretPositionFromPoint(dropX, dropY);
+                        if (posicion && posicion.offsetNode) {
+                            rango = document.createRange();
+                            rango.setStart(posicion.offsetNode, posicion.offset);
+                            rango.collapse(true);
+                        }
+                    } 
+                    // Fallback para navegadores/webviews que aún no implementan el nuevo estándar
+                    else if (document.caretRangeFromPoint) {
+                        rango = document.caretRangeFromPoint(dropX, dropY);
+                    }
+
+                    if (rango) {
+                        const img = document.createElement("img");
+                        img.src = imgUrl;
+                        img.className = "inline-block max-w-[100px] h-auto align-middle mx-1";
+                        
+                        // 1. Borramos contenido si el usuario arrastró hacia texto sombreado
+                        rango.deleteContents();
+                        
+                        // 2. Insertamos la imagen exactamente en la línea calculada
+                        rango.insertNode(img);
+
+                        // 3. Movemos el cursor real a la derecha de la imagen insertada
+                        rango.setStartAfter(img);
+                        rango.setEndAfter(img);
+                        
+                        const seleccion = window.getSelection();
+                        if (seleccion) {
+                            seleccion.removeAllRanges();
+                            seleccion.addRange(rango);
+                        }
+                        
+                        // 4. Forzamos a EscPos.svelte a actualizarse sincronizando el evento
+                        const editor = document.querySelector('[contenteditable="true"]');
+                        if (editor) editor.dispatchEvent(new Event("input", { bubbles: true }));
+                    }
+                };
+
+                imageClass.src = imgUrl;
+            }
+        });
+    });
+
+    onDestroy(() => {
+        unlisten?.();
+    });
 </script>
 
 <div class="inline-block p-6">

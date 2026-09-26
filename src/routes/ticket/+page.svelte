@@ -270,7 +270,7 @@
     <!-- Ajustado p-8 a p-6 y removido mt-2.5 para corregir la posición del canvas -->
     <div class="w-full flex-1 bg-gray-200 dark:bg-gray-900 overflow-auto">
         {#if isCanvas}
-            <Canvas width={width} height={height} bind:elementsCanvas={elementsCanvas} bind:selectedCanvasElementText={selectedCanvasElementText} bind:selectedCanvasElementImage={selectedCanvasElementImage} bind:selectedCanvasElementInfo={selectedCanvasElementInfo}/>
+            <Canvas width={width} height={height} bind:elementsCanvas={elementsCanvas} bind:selectedCanvasElementText={selectedCanvasElementText} bind:selectedCanvasElementImage={selectedCanvasElementImage} bind:selectedCanvasElementInfo={selectedCanvasElementInfo} bind:idElement={idElement}/>
         {:else}
             <EscPos width={width} height={height} bind:contenidoEscPos={contenidoEscPos}/>
         {/if}

@@ -1,8 +1,10 @@
 <!-- Canvas.svelte -->
 <script lang="ts">
-    import type { CanvasElement } from "$lib/types";
+    import type { CanvasElement, ImageCanvasElement } from "$lib/types";
     import { getTextElementFromCanvasElement } from "$lib/utils/canvas_utils";
-    import { tick } from "svelte";
+    import { onMount, tick, onDestroy } from "svelte";
+    import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+    import { convertFileSrc } from '@tauri-apps/api/core'; // Transforma rutas reales a URLs seguras
 
     interface Props {
         width: number;
@@ -11,10 +13,11 @@
         selectedCanvasElementText: CanvasElement | null;
         selectedCanvasElementImage: CanvasElement | null;
         selectedCanvasElementInfo: CanvasElement | null;
+        idElement: number;
     }
 
-    let { width, height, elementsCanvas = $bindable(), selectedCanvasElementText = $bindable(), selectedCanvasElementImage = $bindable(), selectedCanvasElementInfo = $bindable() }: Props =$props();
-
+    let { width, height, elementsCanvas = $bindable(), selectedCanvasElementText = $bindable(), selectedCanvasElementImage = $bindable(), selectedCanvasElementInfo = $bindable(), idElement = $bindable() }: Props =$props();
+    let canvasDiv = $state<HTMLDivElement>();
     // 384px / 58mm = 6.620689655 px/mm
     const PX_PER_MM = 6.620689655;
 
@@ -188,6 +191,47 @@
         selectedCanvasElementText = null;
     }
 
+    function addImageOnDrop(imgUrl: string, dropX: number, dropY: number){
+        console.log(`x: ${dropX}. y: ${dropY}`);
+        const imageClass = new Image();
+        imageClass.onload = () => {
+            const anchoImagen = imageClass.naturalWidth;
+            const altoImagen = imageClass.naturalHeight;
+            const newImage: ImageCanvasElement = {alto: altoImagen, ancho: anchoImagen, src: imgUrl, tipo: "Imagen"};
+            const newElement: CanvasElement = {element: newImage, id: idElement, x: dropX, y: dropY};
+            idElement += 1;
+            elementsCanvas.push(newElement);
+        };
+        imageClass.src = imgUrl;
+    }
+
+    let unlisten: (() => void) | null = null;
+    onMount(async()=>{
+            const currentWebView = getCurrentWebviewWindow();
+            unlisten = await currentWebView.onDragDropEvent(event=>{
+                if(event.payload.type == "drop"){
+                    const rutaReal = event.payload.paths[0];
+                    const imgUrl = convertFileSrc(rutaReal);
+                    
+                    let dropX = event.payload.position.x;
+                    let dropY = event.payload.position.y;
+
+                    // Ajustamos las coordenadas globales a coordenadas locales del lienzo
+                    if (canvasDiv) {
+                        const rect = canvasDiv.getBoundingClientRect();
+                        dropX = dropX - rect.left; //Restamos el drop de la ventana con left que es en que eje X empieza el div de canvas
+                        dropY = dropY - rect.top; //Lo mismo pero para Y
+                    }
+
+                    addImageOnDrop(imgUrl, dropX, dropY);
+                }
+            });
+        });
+
+    onDestroy(() => {
+        unlisten?.();
+    });
+
 </script>
 
 <svelte:window onkeydown={manejarTeclado} />
@@ -195,7 +239,7 @@
 <div class="inline-block p-6">
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div style={getCanvasStyle(widthPx, heightPx)} class="shadow-2xl relative select-none overflow-x-auto overflow-y-hidden">
+    <div bind:this={canvasDiv} style={getCanvasStyle(widthPx, heightPx)} class="shadow-2xl relative select-none overflow-x-auto overflow-y-hidden">
         {#each elementsCanvas as element (element.id)}
             {#if element.element.tipo == "Texto"}
                 <span 
