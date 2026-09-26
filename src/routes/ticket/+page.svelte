@@ -1,5 +1,6 @@
 <script lang="ts">
     import Canvas from "./Canvas.svelte";
+    import EscPos from "./EscPos.svelte";
     import type { CanvasElement, TextCanvasElement,ImageCanvasElement, InfoCanvasElement } from "$lib/types";
     import { sanitizeNonNegativeInput } from "$lib/utils/input_utils";
     import { toast } from "$lib/toast.svelte";
@@ -100,6 +101,23 @@
                 idElement += 1;
                 
                 elementsCanvas = [...elementsCanvas, newElement];
+            }else{
+                const seleccion = window.getSelection();
+                if (seleccion && seleccion.rangeCount > 0) {
+                    const rango = seleccion.getRangeAt(0);
+                    const img = document.createElement("img");
+                    img.src = imgUrl;
+                    img.className = "inline-block max-w-[100px] h-auto align-middle mx-1";
+                    rango.deleteContents();
+                    // 5. Insertar la imagen en esa posición
+                    rango.insertNode(img);
+
+                    // 6. Mover el cursor justo DESPUÉS de la imagen para que el usuario pueda seguir escribiendo
+                    rango.setStartAfter(img);
+                    rango.setEndAfter(img);
+                    seleccion.removeAllRanges();
+                    seleccion.addRange(rango);
+                }
             }
         };
 
@@ -126,8 +144,69 @@
             const newElement: CanvasElement = {element: newInfoElement, id: idElement, x: 10, y: 10};
             idElement += 1;
             elementsCanvas.push(newElement);
+        }else{
+            // 1. Validar si ya existe la información en el modo EscPos
+            const indexStart = contenidoEscPos.indexOf("[INFO_START]");
+            const indexEnd = contenidoEscPos.indexOf("[INFO_END]");
+
+            // Si ambos existen (-1 significa que no se encontró) y el START está antes que el END
+            if (indexStart !== -1 && indexEnd !== -1 && indexStart < indexEnd) {
+                toast.amarillo(`Ya hay información agregada`);
+                return;
+            }
+
+            // 2. Continuar con la inserción normal
+            const seleccion = window.getSelection();
+            if (seleccion && seleccion.rangeCount > 0) {
+                const rango = seleccion.getRangeAt(0);
+
+                const infoHTML = `
+                    <div>[INFO_START]</div>
+                    <div>Total: 500.00 Local</div>
+                    <div>Nombre: José</div>
+                    <div>07 de septiembre de 2026, 10:34:23</div>
+                    <div>Mesero: Pepe</div>
+                    <div>Pizza - 250</div>
+                    <div>Nuggets - 250</div>
+                    <div>[INFO_END]</div>
+                `;
+
+                const fragmento = rango.createContextualFragment(infoHTML);
+                const ultimoNodo = fragmento.lastChild;
+
+                let lineaActual = rango.startContainer as HTMLElement;
+                while (lineaActual && lineaActual.tagName !== "DIV" && lineaActual.contentEditable !== "true") {
+                    lineaActual = lineaActual.parentElement as HTMLElement;
+                }
+
+                if (lineaActual && lineaActual.tagName === "DIV") {
+                    if (lineaActual.textContent?.trim() === "" && !lineaActual.querySelector('img')) {
+                        lineaActual.replaceWith(fragmento);
+                    } else {
+                        lineaActual.after(fragmento);
+                    }
+                } else {
+                    rango.deleteContents();
+                    rango.insertNode(fragmento);
+                }
+
+                if (ultimoNodo) {
+                    const nuevoRango = document.createRange();
+                    nuevoRango.setStartAfter(ultimoNodo);
+                    nuevoRango.collapse(true);
+                    seleccion.removeAllRanges();
+                    seleccion.addRange(nuevoRango);
+                }
+
+                const editor = document.querySelector('[contenteditable="true"]');
+                if (editor) editor.dispatchEvent(new Event("input", { bubbles: true }));
+            }
         }
     }
+
+    //EscPos
+    //Inicializar con un div que contiene un <br> (así es como el navegador entiende un renglón vacío)
+    let contenidoEscPos = $state("<div><br></div>");
 
 </script>
 
@@ -192,6 +271,8 @@
     <div class="w-full flex-1 bg-gray-200 dark:bg-gray-900 overflow-auto">
         {#if isCanvas}
             <Canvas width={width} height={height} bind:elementsCanvas={elementsCanvas} bind:selectedCanvasElementText={selectedCanvasElementText} bind:selectedCanvasElementImage={selectedCanvasElementImage} bind:selectedCanvasElementInfo={selectedCanvasElementInfo}/>
+        {:else}
+            <EscPos width={width} height={height} bind:contenidoEscPos={contenidoEscPos}/>
         {/if}
     </div>
 
