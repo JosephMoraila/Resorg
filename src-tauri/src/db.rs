@@ -131,6 +131,13 @@ pub fn inicializar_tablas() -> Result<(), String> {
             FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE
         );
 
+        CREATE TABLE IF NOT EXISTS pedidos_pagados(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pedido_id INTEGER NOT NULL,
+            metodo TEXT NOT NULL DEFAULT 'efectivo',
+            FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE
+        );
+
     ";
 
     conn.execute_batch(comando).map_err(|e: rusqlite::Error| e.to_string())?;

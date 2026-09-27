@@ -11,7 +11,7 @@
     import BotonesVerMas from "./BotonesVerMas.svelte";
 
     let paginaActual = $state(1);  
-    let filters: FiltrosVerOrdenesProps = $state({id: null, estatus: "Pendiente", fechaFin: null, fechaInicio: null, nombreCliente: null, nota: null, tipoPedido: null, totalDesde: null, totalHasta: null});
+    let filters: FiltrosVerOrdenesProps = $state({id: null, estatus: "Pendiente", fechaFin: null, fechaInicio: null, nombreCliente: null, nota: null, tipoPedido: null, totalDesde: null, totalHasta: null, metodo_pago: null});
     let paginasTotales = $state(1);
     let totalPedidosPendientes = $state(0);
     const PAGINA_TAMANO = 50;

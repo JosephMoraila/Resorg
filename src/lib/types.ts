@@ -89,6 +89,8 @@ export interface PedidoPlatillo{
   platillo: Platillo | null;
 }
 
+export type MetodoPago = "Efectivo" | "Tarjeta" | "Transferencia" | "Mixto";
+
 export interface Pedido{
   id: number;
   total: number;
@@ -99,6 +101,7 @@ export interface Pedido{
   fecha_hora: string;
   platillos_pedidos: PedidoPlatillo[];
   info_tipo_pedido: PedidoLocal | PedidoDomicilio | PedidoRecoger;
+  metodo_pago: MetodoPago | null;
 }
 
 export interface FiltrosVerOrdenesProps{
@@ -109,6 +112,7 @@ export interface FiltrosVerOrdenesProps{
   totalDesde: null | number; totalHasta: null | number;
   nota: null | string;
   estatus: null | EstadoPedido;
+  metodo_pago: MetodoPago | null;
 }
 
 export interface FilaPlatillo {
@@ -156,3 +160,4 @@ export interface CanvasElement{
   y: number;
   element: TextCanvasElement | ImageCanvasElement | InfoCanvasElement;
 }
+

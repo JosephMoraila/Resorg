@@ -1,6 +1,6 @@
 use std::{fmt::{self}};
 
-use rusqlite::{Connection, ToSql};
+use rusqlite::{Connection, OptionalExtension, ToSql};
 use crate::db::{PAGINACION_50_TAMANO, Platillo, calcular_offset, obtener_conexion_db, get_platillo_by_id};
 use serde::{Deserialize, Serialize};
 use crate::utils::{descapitalizar, capitalizar, convertir_local_a_utc};
@@ -91,6 +91,22 @@ impl fmt::Display for EstadoPedido {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum MetodoPago{
+    Efectivo, Tarjeta, Transferencia, Mixto
+}
+
+impl fmt::Display for MetodoPago {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MetodoPago::Efectivo => write!(f, "Efectivo"),
+            MetodoPago::Tarjeta => write!(f, "Tarjeta"),
+            MetodoPago::Transferencia => write!(f, "Transferencia"),
+            MetodoPago::Mixto => write!(f, "Mixto"),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Pedido{
     pub id: u64,
     pub total: f64,
@@ -100,7 +116,8 @@ pub struct Pedido{
     pub nota: Option<String>,
     pub fecha_hora: String,
     pub platillos_pedidos: Vec<PedidoPlatillo>,
-    pub info_tipo_pedido: InfoTipoPedido
+    pub info_tipo_pedido: InfoTipoPedido,
+    pub metodo_pago: Option<MetodoPago>
 }
 
 impl Pedido {
@@ -143,12 +160,22 @@ impl Pedido {
         }
     }
 
-
+    fn create_new_metodo_pago_by_name(metodo_pago_str: &str)->MetodoPago{
+        if metodo_pago_str == "efectivo" || metodo_pago_str == "Efectivo"{
+            MetodoPago::Efectivo
+        }else if metodo_pago_str == "mixto" || metodo_pago_str == "Mixto"{
+            MetodoPago::Mixto
+        }else if metodo_pago_str == "tarjeta" || metodo_pago_str == "Tarjeta"{
+            MetodoPago::Tarjeta
+        }else{
+            MetodoPago::Transferencia
+        }
+    }
 
 }
 
 #[tauri::command]
-pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Option<TipoPedido>, nombre_cliente: Option<String>, fecha_inicio: Option<String>, fecha_fin: Option<String>, total_desde: Option<f64>, total_hasta: Option<f64>, nota: Option<String>, estatus: Option<EstadoPedido>) -> Result<Vec<Pedido>, String>{
+pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Option<TipoPedido>, nombre_cliente: Option<String>, fecha_inicio: Option<String>, fecha_fin: Option<String>, total_desde: Option<f64>, total_hasta: Option<f64>, nota: Option<String>, estatus: Option<EstadoPedido>, metodo_pago: Option<MetodoPago>) -> Result<Vec<Pedido>, String>{
     let conn: Connection = obtener_conexion_db()?;
     let mut pedidos: Vec<Pedido> = Vec::new();
     let mut comando: String = String::from("SELECT id, total, tipo_pedido, nombre_cliente, nota, estatus, fecha_hora_pedido FROM pedidos");
@@ -178,6 +205,16 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
             let str_some: String = tipo_pedido_some.to_string();
             let lower: String = descapitalizar(&str_some);
             let text_param = format!("tipo_pedido = ?{}", numero_parametro);
+            let caja: Box<String> = Box::new(lower);
+            let caja_as: Box<dyn ToSql> = caja as Box<dyn rusqlite::ToSql>;
+            parametros.push(caja_as);
+            numero_parametro += 1;
+            vec_campos_where.push(text_param);
+        }
+        if let Some(metodo_pago_some) = metodo_pago {
+            let str_some: String = metodo_pago_some.to_string();
+            let lower: String = descapitalizar(&str_some);
+            let text_param: String = format!("id IN (SELECT pedido_id FROM pedidos_pagados WHERE metodo = ?{})",numero_parametro);
             let caja: Box<String> = Box::new(lower);
             let caja_as: Box<dyn ToSql> = caja as Box<dyn rusqlite::ToSql>;
             parametros.push(caja_as);
@@ -271,7 +308,7 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
         let enum_info_tipo_pedido: InfoTipoPedido = Pedido::create_new_info_tipo_pedido_by_name(&tipo_pedido);
         let enum_estado_pedido: EstadoPedido = Pedido::create_new_estado_pedido_by_name(&estatus);
         let enum_tipo_pedido_enum: TipoPedido = Pedido::create_new_tipo_pedido_by_name(&tipo_pedido);
-        let pedidito = Pedido{id: identifier_i64 as u64, total: total, tipo: enum_tipo_pedido_enum, estado: enum_estado_pedido, nota: nota, nombre_cliente: nombre_cliente, fecha_hora: fecha_hora_pedido, platillos_pedidos: Vec::new(), info_tipo_pedido: enum_info_tipo_pedido};
+        let pedidito = Pedido{id: identifier_i64 as u64, total: total, tipo: enum_tipo_pedido_enum, estado: enum_estado_pedido, nota: nota, nombre_cliente: nombre_cliente, fecha_hora: fecha_hora_pedido, platillos_pedidos: Vec::new(), info_tipo_pedido: enum_info_tipo_pedido, metodo_pago: None};
         Ok(pedidito)
     }).map_err(|e: rusqlite::Error| e.to_string())?;
     
@@ -283,6 +320,7 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
         obj.platillos_pedidos = obtener_platillos_pedidos_by_pedido_id(obj.id)?;
         //Ahora obtener la info del tipo de pedido, ya sea local, domicilio o recoger
         obj.info_tipo_pedido = obetener_info_tipo_pedido_by_pedido_id(obj.id, &obj.tipo)?;
+        obj.metodo_pago = obtener_metodo_pago_by_pedido_id(obj.id)?;
         pedidos.push(obj);
     }
 
@@ -291,7 +329,7 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
 }
 
 #[tauri::command]
-pub fn count_ordenes(id: Option<u64>,tipo_pedido: Option<TipoPedido>,nombre_cliente: Option<String>,fecha_inicio: Option<String>,fecha_fin: Option<String>,total_desde: Option<f64>,total_hasta: Option<f64>,nota: Option<String>,estatus: Option<EstadoPedido>,) -> Result<i64, String> {
+pub fn count_ordenes(id: Option<u64>,tipo_pedido: Option<TipoPedido>,nombre_cliente: Option<String>,fecha_inicio: Option<String>,fecha_fin: Option<String>,total_desde: Option<f64>,total_hasta: Option<f64>,nota: Option<String>,estatus: Option<EstadoPedido>, metodo_pago: Option<MetodoPago>) -> Result<i64, String> {
     let conn: Connection = obtener_conexion_db()?;
     let mut comando: String = String::from("SELECT COUNT(*) FROM pedidos");
     let mut parametros: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
@@ -319,6 +357,16 @@ pub fn count_ordenes(id: Option<u64>,tipo_pedido: Option<TipoPedido>,nombre_clie
             let str_some: String = tipo_pedido_some.to_string();
             let lower: String = descapitalizar(&str_some);
             let text_param = format!("tipo_pedido = ?{}", numero_parametro);
+            let caja: Box<String> = Box::new(lower);
+            let caja_as: Box<dyn ToSql> = caja as Box<dyn rusqlite::ToSql>;
+            parametros.push(caja_as);
+            numero_parametro += 1;
+            vec_campos_where.push(text_param);
+        }
+        if let Some(metodo_pago_some) = metodo_pago { 
+            let str_some: String = metodo_pago_some.to_string();
+            let lower: String = descapitalizar(&str_some);
+            let text_param: String = format!("id IN (SELECT pedido_id FROM pedidos_pagados WHERE metodo = ?{})",numero_parametro);
             let caja: Box<String> = Box::new(lower);
             let caja_as: Box<dyn ToSql> = caja as Box<dyn rusqlite::ToSql>;
             parametros.push(caja_as);
@@ -480,6 +528,29 @@ fn obetener_info_tipo_pedido_by_pedido_id(pedido_id: u64, tipo_pedido: &TipoPedi
     };
     let info: InfoTipoPedido = enum_info?;
     Ok(info)
+}
+
+fn obtener_metodo_pago_by_pedido_id(pedido_id: u64)->Result<Option<MetodoPago>, String>{
+    let conn: Connection = obtener_conexion_db()?;
+    let params = rusqlite::params![pedido_id as i64];
+    let comando: &str = "SELECT metodo FROM pedidos_pagados WHERE pedido_id = ?1;";
+
+    let resultado_query: Result<String, rusqlite::Error> = conn.query_row(comando, params, |row|{
+        let metodo_pago_lower: String = row.get::<&str, String>("pedidos_pagados")?;
+        Ok(metodo_pago_lower)
+    });
+
+    let opcional_res: Result<Option<String>, rusqlite::Error> = resultado_query.optional();//Si no encontró ninguna lo hacemos option
+    let res_select: Option<String> = opcional_res.map_err(|e| e.to_string())?;//Desempaquetamos el Result para que nos de el option
+    let metodo_option: Option<MetodoPago> = match res_select{
+        Some(metodo_str_lower)=>{
+            let metodo_upper: String = capitalizar(&metodo_str_lower);
+            let metodo_some: MetodoPago = Pedido::create_new_metodo_pago_by_name(&metodo_upper);
+            Some(metodo_some)
+        }
+        None => None
+    };
+    Ok(metodo_option)
 }
 
 #[tauri::command]

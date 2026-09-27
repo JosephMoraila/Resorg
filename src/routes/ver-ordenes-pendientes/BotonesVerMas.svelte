@@ -1,6 +1,6 @@
 <script lang="ts">
 
-    import type { Pedido, FiltrosVerOrdenesProps } from "$lib/types";
+    import type { Pedido, FiltrosVerOrdenesProps, MetodoPago } from "$lib/types";
     import { invoke } from "@tauri-apps/api/core";
     import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
     import { toast } from "$lib/toast.svelte";
@@ -14,9 +14,9 @@
 
     let onModalCobrar = $state(false);
     let modalPedidoPendiente = $state<null | Pedido>(null);
-    async function onCobrar() {
+    async function onCobrar(metodoPago: MetodoPago, contenidoTicket: string) {
         if(modalPedidoPendiente === null) return;
-        const params = {pedido: modalPedidoPendiente};
+        const params = {pedido: modalPedidoPendiente, metodoPago, contenidoTicket};
         try{
             await invoke("cobrar_pedido", params);
             toast.verde("Cobrado correctamente");

@@ -165,7 +165,7 @@
             }
             
             const nuevoInfoTipoPedido: PedidoLocal = {pedido_id: originalPedidoId, mesa, piso,mesero: meseroSeleccionado,id: sameOrZeroId,tipo: "Local"};
-            const pedidoActualizado: Pedido = {nombre_cliente: nuevoNombreCliente,nota: nuevoNotaCliente, estado: nuevoEstado, tipo: nuevoTipo,fecha_hora:fechaHora,total,id,platillos_pedidos:platillosPedidosCopy, info_tipo_pedido:nuevoInfoTipoPedido};
+            const pedidoActualizado: Pedido = {nombre_cliente: nuevoNombreCliente,nota: nuevoNotaCliente, estado: nuevoEstado, tipo: nuevoTipo,fecha_hora:fechaHora,total,id,platillos_pedidos:platillosPedidosCopy, info_tipo_pedido:nuevoInfoTipoPedido, metodo_pago: null};
             onGuardadCambios(pedidoActualizado);
         }else if(nuevoTipo == "Domicilio"){
             const coloniaDefinitive = returnNullOrStringValue(colonia);
@@ -174,11 +174,11 @@
             const telefonoDefinitive = returnNullOrStringValue(telefono);
             const repartidorDefinitive = returnNullOrStringValue(repartidor);
             const nuevoInfoTipoPedido: PedidoDomicilio = {pedido_id: originalPedidoId,colonia:coloniaDefinitive, calle:calleDefinitive,numero_interior_exterior:numeroInteriorExteriorDefinitive,telefono:telefonoDefinitive, repartidor:repartidorDefinitive, id:sameOrZeroId, tipo:"Domicilio"};
-            const pedidoActualizado: Pedido = {nombre_cliente: nuevoNombreCliente,nota: nuevoNotaCliente, estado: nuevoEstado, tipo: nuevoTipo,fecha_hora:fechaHora,total,id,platillos_pedidos:platillosPedidosCopy, info_tipo_pedido:nuevoInfoTipoPedido};
+            const pedidoActualizado: Pedido = {nombre_cliente: nuevoNombreCliente,nota: nuevoNotaCliente, estado: nuevoEstado, tipo: nuevoTipo,fecha_hora:fechaHora,total,id,platillos_pedidos:platillosPedidosCopy, info_tipo_pedido:nuevoInfoTipoPedido, metodo_pago: null};
             onGuardadCambios(pedidoActualizado);
         }else{
             const nuevoInfoTipoPedido: PedidoRecoger = {id:sameOrZeroId, pedido_id:originalPedidoId,tipo: "Recoger"};
-            const pedidoActualizado: Pedido = {nombre_cliente: nuevoNombreCliente,nota: nuevoNotaCliente, estado: nuevoEstado, tipo: nuevoTipo,fecha_hora:fechaHora,total,id,platillos_pedidos:platillosPedidosCopy, info_tipo_pedido:nuevoInfoTipoPedido};
+            const pedidoActualizado: Pedido = {nombre_cliente: nuevoNombreCliente,nota: nuevoNotaCliente, estado: nuevoEstado, tipo: nuevoTipo,fecha_hora:fechaHora,total,id,platillos_pedidos:platillosPedidosCopy, info_tipo_pedido:nuevoInfoTipoPedido, metodo_pago: null};
             onGuardadCambios(pedidoActualizado);
         }
         

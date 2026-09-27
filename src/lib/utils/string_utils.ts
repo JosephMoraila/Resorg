@@ -1,4 +1,4 @@
-import type { TipoPedido, EstadoPedido } from "$lib/types";
+import type { TipoPedido, EstadoPedido, MetodoPago } from "$lib/types";
 
 /**
  * Formatea un string/entrada para que solo acepte números, Se usa en inputs de tipo texto para que el usuario pueda escribir libremente, pero el valor final se formatea como moneda.
@@ -179,5 +179,20 @@ export function obtenerTextoEstadoPedido(estadoPedido: EstadoPedido): string{
   else if(estadoPedido == "Entregado") texto = "Entregado";
   else if(estadoPedido == "Finalizado") texto = "Finalizado";
   else if(estadoPedido == "Pendiente") texto = "Pendiente";
+  return texto;
+}
+
+/**
+ * Obtener texto de método de pago
+ * @param metodoPago Tipo de método de pago
+ * @returns "Efectivo" | "Tarjeta" | "Transferencia" | "Mixto";
+ */
+export function obtenerTextoMetodoPago(metodoPago: MetodoPago){
+  let texto = "";
+  if(metodoPago == "Efectivo") texto = "Efectivo";
+  else if(metodoPago == "Mixto") texto = "Mixto";
+  else if(metodoPago == "Tarjeta") texto = "Tarjeta";
+  else if(metodoPago == "Transferencia") texto = "Transferencia";
+
   return texto;
 }

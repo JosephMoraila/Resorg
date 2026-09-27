@@ -74,7 +74,7 @@
         let definitiveNota: string | null = null;
         if(nota.trim() != "") definitiveNota = nota.trim();
 
-        const paramsFiltro: FiltrosVerOrdenesProps = {id: definitiveIdInput, tipoPedido: definitiveTipoInput, nombreCliente: definitiveNombreCliente, fechaInicio: definitiveFechaInicio, fechaFin: definitiveFechaFin, totalDesde: definitiveTotalDesde, totalHasta: definitiveTotalHasta, nota: definitiveNota, estatus: "Pendiente"};
+        const paramsFiltro: FiltrosVerOrdenesProps = {id: definitiveIdInput, tipoPedido: definitiveTipoInput, nombreCliente: definitiveNombreCliente, fechaInicio: definitiveFechaInicio, fechaFin: definitiveFechaFin, totalDesde: definitiveTotalDesde, totalHasta: definitiveTotalHasta, nota: definitiveNota, estatus: "Pendiente", metodo_pago: null};
         const paramsFunc = {paginaFrontend: 1, ...paramsFiltro}; //Como es buscar nuevos filtros se empieza del 1
         const paramsCount = {...paramsFiltro};
         try{

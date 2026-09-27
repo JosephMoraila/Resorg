@@ -1,4 +1,4 @@
-use crate::db::{EstadoPedido, InfoTipoPedido, Pedido, PedidoDomicilio, PedidoLocal, PedidoRecoger,TipoPedido,PedidoPlatillo, obtener_conexion_db};
+use crate::db::{EstadoPedido, InfoTipoPedido, Pedido, PedidoDomicilio, PedidoLocal, PedidoRecoger,TipoPedido,PedidoPlatillo, obtener_conexion_db, MetodoPago};
 use rusqlite::{Connection, Transaction};
 use crate::utils::{descapitalizar};
 
@@ -161,6 +161,7 @@ pub fn update_pedido(pedido: Pedido)->Result<Pedido, String>{
     let nombre_cliente: Option<String> = pedido.nombre_cliente.clone();
     let fecha_hora: String = pedido.fecha_hora.clone();
     let estado: EstadoPedido = pedido.estado.clone();
+    let metodo_pago: Option<MetodoPago> = pedido.metodo_pago.clone();
     let pedido_id: u64 = pedido.id;
     let info: InfoTipoPedido = if is_same{
         let info = update_same_tipo(pedido, &tx)?;
@@ -171,6 +172,6 @@ pub fn update_pedido(pedido: Pedido)->Result<Pedido, String>{
     };
     //Confirmar trasnaccion si todo sale bien
     tx.commit().map_err(|e: rusqlite::Error|e.to_string())?;
-    let pedido_actualizado = Pedido{id: pedido_id, estado, fecha_hora, nombre_cliente, nota, tipo, total, platillos_pedidos, info_tipo_pedido: info};
+    let pedido_actualizado = Pedido{id: pedido_id, estado, fecha_hora, nombre_cliente, nota, tipo, total, platillos_pedidos, info_tipo_pedido: info, metodo_pago};
     Ok(pedido_actualizado)
 }
