@@ -4,6 +4,10 @@
     import type { CanvasElement, TextCanvasElement,ImageCanvasElement, InfoCanvasElement } from "$lib/types";
     import { sanitizeNonNegativeInput } from "$lib/utils/input_utils";
     import { toast } from "$lib/toast.svelte";
+    import { convertirBlobUrlABase64, convertirBase64ABlobUrl } from "$lib/utils/file_utils";
+    import { invoke } from "@tauri-apps/api/core";
+    import { prepararStringHtmlParaExportar } from "$lib/utils/escpos_utils";
+    import { onMount } from "svelte";
 
     let elementsCanvas: CanvasElement[] = $state([]);
     let idElement = $state(1);
@@ -133,7 +137,7 @@
         }
     }
 
-    let infoExample = "Total: 500.00 Local\nNombre: José\n07 de septiembre de 2026, 10:34:23\nMesero: Pepe\nPizza - 250\nNuggets - 250";
+    let infoExample = "Total: 500.00 Local\nMétodo de pago: Efectivo\nPagado: 700.00\nCambio: 200.00\nNombre: José\n07 de septiembre de 2026, 10:34:23\nMesero: Pepe\nPizza - 250\nNuggets - 250";
     function onAgregarInfo(){
         if(isCanvas){
             if(elementsCanvas.some(el=>el.element.tipo == "Info")){
@@ -163,6 +167,9 @@
                 const infoHTML = `
                     <div>[INFO_START]</div>
                     <div>Total: 500.00 Local</div>
+                    <div>Método de pago: Efectivo</div>
+                    <div>Pagado: 700.00</div>
+                    <div>Cambio: 200.00</div>
                     <div>Nombre: José</div>
                     <div>07 de septiembre de 2026, 10:34:23</div>
                     <div>Mesero: Pepe</div>
@@ -207,6 +214,102 @@
     //EscPos
     //Inicializar con un div que contiene un <br> (así es como el navegador entiende un renglón vacío)
     let contenidoEscPos = $state("<div><br></div>");
+
+    async function onSave(){
+        console.log(elementsCanvas);
+        let canvasElementsToBackend: CanvasElement[] = [];
+        try{
+            for(let ec of elementsCanvas){
+                if(ec.element.tipo == "Imagen"){
+                    const base64Image = await convertirBlobUrlABase64(ec.element.src);
+                    const convertedImageElement: ImageCanvasElement = {alto: ec.element.alto, ancho: ec.element.ancho, src: base64Image, tipo: "Imagen"};
+                    const convertedCanvasElement: CanvasElement = {element: convertedImageElement, id: ec.id, x: ec.x, y: ec.y};
+                    canvasElementsToBackend.push(convertedCanvasElement);
+                }else if(ec.element.tipo == "Info"){
+                    const convertedInfoElement: InfoCanvasElement = {size: ec.element.size, texto: ec.element.texto, tipo: "Info"};
+                    const convertedCanvasElement: CanvasElement = {element: convertedInfoElement, id: ec.id, x: ec.x, y: ec.y};
+                    canvasElementsToBackend.push(convertedCanvasElement);
+                }else if(ec.element.tipo == "Texto"){
+                    const convertedTextoElement: TextCanvasElement = {is_under_info: ec.element.is_under_info, size: ec.element.size, texto: ec.element.texto, tipo: "Texto"};
+                    const convertedCanvasElement: CanvasElement = {element: convertedTextoElement, id: ec.id, x: ec.x, y: ec.y};
+                    canvasElementsToBackend.push(convertedCanvasElement);
+                }
+            }
+        }catch(error){
+            toast.rojo(`Error al convertir imagenes de canvas: ${error}`);
+            return;
+        }
+
+        //Guardar información del ticket
+        try{
+            let paramsTicket = {width, height, isCanvas};
+            invoke("save_ticket_measurement", paramsTicket);
+            toast.verde(`Información del ticket guardada correctamente`);
+        }catch(error){
+            const err = error as string;
+            toast.rojo(`Error guardando información del ticket: ${err}`);
+        }
+
+        //Guardar canvas:
+        try{
+            let paramsCanvas = {canvasElements: canvasElementsToBackend};
+            invoke("save_canvas", paramsCanvas);
+            toast.verde(`Elementos de canvas guardados`);
+        }catch(error){
+            const err = error as string;
+            toast.rojo(`Error guardando canvas: ${err}`);
+        }
+
+        //Guardar escpos html:
+        try{
+            const htmlConvertidoImagenes = await prepararStringHtmlParaExportar(contenidoEscPos);
+            let paramsEscPos = {contenidoHtml: htmlConvertidoImagenes};
+            invoke("save_escpos_html", paramsEscPos);
+            toast.verde(`Elementos de escpos guardados`);
+        }catch(error){
+            const err = error as string;
+            toast.rojo(`Error guardando escpos: ${err}`);
+        }
+    }
+
+    onMount(async ()=>{
+        try{
+            const [anchoBackend, altoBackend, isCanvasBackend] = await invoke<[number, number, boolean]>("get_ticket_measurement");
+            width = anchoBackend;
+            height = altoBackend;
+            isCanvas = isCanvasBackend;
+        }catch(error){
+            const err = error as string;
+            toast.rojo(`Error cargando información del ticket: ${err}`);
+        }
+
+        try{
+            let canvasElementsBackend = await invoke<CanvasElement[]>("get_canvas");
+            let idMasAlto = 0; //Por si el usuario quiere agregar más
+            for(let element of canvasElementsBackend){
+                if(element.id > idMasAlto){
+                    idMasAlto = element.id;
+                }
+                if(element.element.tipo == "Imagen"){
+                    element.element.src = convertirBase64ABlobUrl(element.element.src);
+                }
+            }
+            idMasAlto += 1; //Porque el ultimo ID ya existe le ponemos más uno para que el proximo se cree con ese ID
+            idElement = idMasAlto;
+            elementsCanvas = canvasElementsBackend;
+        }catch(error){
+            const err = error as string;
+            toast.rojo(`Error cargando información de canvas: ${err}`);
+        }
+
+        try{
+            const htmlEscposBackend = await invoke<string>("get_escpos_html");
+            contenidoEscPos = htmlEscposBackend;
+        }catch(error){
+            const err = error as string;
+            toast.rojo(`Error cargando información de escpos: ${err}`);
+        }
+    });
 
 </script>
 
@@ -263,6 +366,8 @@
 
         <span>Abajo de info</span>
         <input bind:checked={valueIsUnderInfo} onchange={onChangeCheckUnderInfo} type="checkbox" title="La info es variable hacia abajo por lo que activar esto en un texto lo pondrá abajo" class="size-5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" disabled={isDisabledUnderInfo}>
+
+        <button class="btn-realista" onclick={onSave}>Guardar</button>
 
     </div>
     

@@ -45,3 +45,50 @@ pub fn get_json_printing_settings() -> Result<PathBuf, String> {
 
     Ok(ruta)
 }
+
+//Canvas
+
+pub fn obetener_canvas_folder()->Result<PathBuf, String>{
+    let base_path: PathBuf = obtener_base_path()?;
+    let canvas_folder: PathBuf = base_path.join("canvas_folder");
+
+    fs::create_dir_all(&canvas_folder).map_err(|e| e.to_string())?;
+
+    Ok(canvas_folder)
+}
+
+pub fn get_json_canvas() -> Result<PathBuf, String> {
+    let canvas_folder: PathBuf = obetener_canvas_folder()?;
+    
+    let ruta: PathBuf = canvas_folder.join("canvas_elements.json"); 
+    
+    Ok(ruta)
+}
+
+//Ticket measurement
+
+pub fn get_json_ticket_measurement()-> Result<PathBuf, String> {
+    let base_path: PathBuf = obtener_base_path()?;
+    let ruta: PathBuf = base_path.join("ticket_measurement.json"); 
+
+    Ok(ruta)
+}
+
+//Escpos
+
+pub fn obtener_escpos_folder()->Result<PathBuf, String>{
+    let base_path: PathBuf = obtener_base_path()?;
+    let escpos_folder: PathBuf = base_path.join("escpos_folder");
+
+    fs::create_dir_all(&escpos_folder).map_err(|e| e.to_string())?;
+
+    Ok(escpos_folder)
+}
+
+pub fn get_html_escpos_path() -> Result<PathBuf, String> {
+    let escpos_folder: PathBuf = obtener_escpos_folder()?;
+    
+    let ruta: PathBuf = escpos_folder.join("escpos_elements.html"); 
+    
+    Ok(ruta)
+}

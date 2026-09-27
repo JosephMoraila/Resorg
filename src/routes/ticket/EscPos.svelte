@@ -22,9 +22,10 @@
 
     let contentEditableEl = $state<HTMLDivElement | null>(null);
 
-    onMount(() => {
-        if (contentEditableEl) {
-            contentEditableEl.innerHTML = contenidoEscPos; // solo se escribe UNA vez, al montar
+    $effect(() => {
+        // Actualiza el HTML interno solo si la variable externa cambió 
+        if (contentEditableEl && contentEditableEl.innerHTML !== contenidoEscPos) {
+            contentEditableEl.innerHTML = contenidoEscPos;
         }
     });
 
@@ -197,7 +198,7 @@
         aria-multiline="true"
         tabindex="0"
         style={getEscPosStyle(widthPx, heightPx)}
-        class="text-center text-black shadow-2xl relative select-none overflow-x-auto overflow-y-auto"
+        class="text-center text-black shadow-2xl relative select-none overflow-x-auto overflow-y-auto break-all"
     >
     </div>
 

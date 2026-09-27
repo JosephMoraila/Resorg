@@ -13,11 +13,18 @@ use crate::printer::{obtener_impresoras, save_printting_settings, get_printting_
 mod printing;
 
 mod escpos;
+use crate::escpos::{save_escpos_html, get_escpos_html};
 
 #[cfg(target_os = "windows")]
 mod windows;
 
 mod utils;
+
+mod canvas;
+use crate::canvas::{save_canvas, get_canvas};
+
+mod ticket;
+use crate::ticket::{save_ticket_measurement, get_ticket_measurement};
 
 pub static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 
@@ -37,7 +44,8 @@ pub fn run() {
             obtener_impresoras, save_printting_settings, get_printting_settings,
             insert_pedido_local, is_mesa_ocupada, insert_pedido_local, insert_pedido_domicilio, insert_pedido_recoger, is_mesa_exists, is_piso_exists,
             obtener_ordenes, count_ordenes, guardar_pedido_compartido ,obtener_pedido_compartido,
-            update_pedido, update_platillos_orden, cobrar_pedido
+            update_pedido, update_platillos_orden, cobrar_pedido,
+            save_canvas, save_ticket_measurement, save_escpos_html, get_ticket_measurement, get_canvas, get_escpos_html
         ])
         .setup(|app| {
             APP_HANDLE.set(app.handle().clone()).unwrap();
