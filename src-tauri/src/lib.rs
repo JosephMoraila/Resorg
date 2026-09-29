@@ -11,7 +11,7 @@ use crate::path_and_files::{get_imagen_platillo};
 mod printer;
 use crate::printer::{obtener_impresoras, save_printting_settings, get_printting_settings};
 mod printing;
-use crate::printing::{print_prueba};
+use crate::printing::{print_prueba, print_again_order_escpos};
 
 mod escpos;
 use crate::escpos::{save_escpos_html, get_escpos_html};
@@ -47,7 +47,7 @@ pub fn run() {
             obtener_ordenes, count_ordenes, guardar_pedido_compartido ,obtener_pedido_compartido,
             update_pedido, update_platillos_orden, cobrar_pedido,
             save_canvas, save_ticket_measurement, save_escpos_html, get_ticket_measurement, get_canvas, get_escpos_html,
-            print_prueba
+            print_prueba, print_again_order_escpos
         ])
         .setup(|app| {
             APP_HANDLE.set(app.handle().clone()).unwrap();

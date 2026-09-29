@@ -83,6 +83,17 @@
             toast.rojo(`Error al actualizar platillos: ${error}`);
         }
     }
+
+    function imprimirOrden(){
+        if(pedido === null) return;
+        let param = {pedido};
+        try{
+            invoke("print_again_order_escpos", param);
+        }catch(err){
+            const error = err as string;
+            toast.rojo(`Error al imprimir orden: ${error}`);
+        }
+    }
 </script>
 
 <main class="min-h-screen w-full bg-white dark:bg-black text-black dark:text-white flex flex-col items-center overflow-x-hidden">
@@ -147,6 +158,7 @@
         <div class="flex flex-row items-center gap-4 flex-nowrap overflow-x-auto pb-2 w-full max-w-full">
             <button onclick={onAbrirModalChangeInfo} class="btn-realista items-start! justify-start!">Cambiar información</button>
             <button onclick={onAbrirModalChangePlatillos} class="btn-realista items-start! justify-start!">Cambiar platillos</button>
+            <button onclick={imprimirOrden} class="btn-realista items-start! justify-start!">Imprimir orden</button>
         </div>
 
         <div class="w-full mt-4">

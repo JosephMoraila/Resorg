@@ -7,7 +7,7 @@ const TIPO_PEDIDO_RECOGER: &str = "recoger";
 #[tauri::command]
 pub fn insert_pedido_recoger(platillos: Vec<PlatilloPedido>, nombre_cliente: Option<String>, notas: Option<String>)->Result<(), String>{
 
-    let mut text_info_to_ticket: String = format!("PEDIDO LOCAL\n");
+    let mut text_info_to_ticket: String = format!("PEDIDO RECOGER\n");
     if let Some(nombre_cliente_some) = nombre_cliente.as_deref(){
         text_info_to_ticket += &format!("Nombre cliente: {}\n", nombre_cliente_some);
     }

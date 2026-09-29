@@ -11,6 +11,9 @@ pub fn insert_pedido_domicilio(platillos: Vec<PlatilloPedido>, nombre_cliente: O
     if let Some(nombre_cliente_some) = nombre_cliente.as_deref(){
         text_info_to_ticket += &format!("Nombre cliente: {}\n", nombre_cliente_some);
     }
+    if let Option::Some(notas_some) = notas.as_deref(){
+        text_info_to_ticket += &format!("Notas: {}\n", notas_some);
+    }
     if let Some(colonia_some) = colonia.as_deref(){
         text_info_to_ticket += &format!("Colonia: {}\n", colonia_some);
     }
