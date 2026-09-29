@@ -44,7 +44,7 @@ fn print_canvas_cobrar(texto_info: String, printer_name: &str)-> Result<(), Stri
         print_canvas_windows(elements, printer_name)?;
     }
     #[cfg(not(target_os = "windows"))]{
-        Err(String::from("Canvas no disponible en este sistema operativo"))
+        return Err(String::from("Canvas no disponible en este sistema operativo"));
     }
     Ok(())
 }
