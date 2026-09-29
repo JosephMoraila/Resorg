@@ -16,7 +16,7 @@
     let modalPedidoPendiente = $state<null | Pedido>(null);
     async function onCobrar(metodoPago: MetodoPago, contenidoTicket: string) {
         if(modalPedidoPendiente === null) return;
-        const params = {pedido: modalPedidoPendiente, metodoPago, contenidoTicket};
+        const params = {pedido: modalPedidoPendiente, metodoPago, infoTocket: contenidoTicket};
         try{
             await invoke("cobrar_pedido", params);
             toast.verde("Cobrado correctamente");

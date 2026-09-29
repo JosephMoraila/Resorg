@@ -7,6 +7,7 @@ use std::path::Path;
 
 const JSON_PRINTER_CLAVE: &str = "printer";
 const JSON_PRINT_ORDER_CLAVE: &str = "is_print_order";
+const JSON_PRINT_AL_COBRAR_CLAVE: &str = "is_print_al_cobrar";
 
 #[tauri::command]
 pub fn obtener_impresoras() -> Vec<String>{
@@ -38,11 +39,12 @@ pub fn obtener_impresoras() -> Vec<String>{
 }
 
 #[tauri::command]
-pub fn save_printting_settings(printer_name: String, is_print_order: bool)->Result<(), String>{
+pub fn save_printting_settings(printer_name: String, is_print_order: bool, is_imprimir_al_cobrar: bool)->Result<(), String>{
     let json_path: PathBuf = get_json_printing_settings()?;
     let data: Value = json!({
         JSON_PRINTER_CLAVE: printer_name,
-        JSON_PRINT_ORDER_CLAVE: is_print_order
+        JSON_PRINT_ORDER_CLAVE: is_print_order,
+        JSON_PRINT_AL_COBRAR_CLAVE: is_imprimir_al_cobrar
     });
 
     let texto: String = serde_json::to_string_pretty(&data).map_err(|e: serde_json::Error| e.to_string())?;
@@ -54,8 +56,8 @@ pub fn save_printting_settings(printer_name: String, is_print_order: bool)->Resu
 #[tauri::command]
 ///Obtiene la configuración de impresion
 /// # Retorna
-/// Tupla en este orden: Nombre de la impresora seleccionada, si se imprime al crear una orden.
-pub fn get_printting_settings()->Result<(String, bool), String>{
+/// Tupla en este orden: Nombre de la impresora seleccionada, si se imprime al crear una orden y si se imprime al cobrar
+pub fn get_printting_settings()->Result<(String, bool, bool), String>{
     let json_path: PathBuf = get_json_printing_settings()?;
     let existe: bool = json_path.exists();
     if existe{
@@ -64,10 +66,11 @@ pub fn get_printting_settings()->Result<(String, bool), String>{
 
         let imprimir_orden: bool = data[JSON_PRINT_ORDER_CLAVE].as_bool().unwrap_or(false);
         let impresora: &str = data[JSON_PRINTER_CLAVE].as_str().unwrap_or("");
+        let is_imprimir_al_cobrar: bool = data[JSON_PRINT_AL_COBRAR_CLAVE].as_bool().unwrap_or(false);
 
-        Ok((impresora.to_string(), imprimir_orden))
+        Ok((impresora.to_string(), imprimir_orden, is_imprimir_al_cobrar))
     }else{
         let vacio: String = String::new();
-        Ok((vacio, false))
+        Ok((vacio, false, false))
     }
 }

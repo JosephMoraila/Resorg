@@ -6,7 +6,7 @@ use crate::printer::{get_printting_settings};
 use crate::escpos::EscposCommands;
 
 pub fn print_order_escpos(text_to_show: &str) -> Result<(), String> {
-    let (printer_name, is_print_order) = get_printting_settings()?;
+    let (printer_name, is_print_order,_) = get_printting_settings()?;
 
     if is_print_order {
         let mut comando: Vec<u8> = Vec::new();

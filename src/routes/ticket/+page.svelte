@@ -311,6 +311,15 @@
         }
     });
 
+    function onProbar(){
+        try{
+            invoke("print_prueba");
+        }catch(error){
+            const err = error as string;
+            toast.rojo(`Error al imprimir prueba: ${err}`);
+        }
+    }
+
 </script>
 
 <main class="w-full h-screen flex flex-col bg-white dark:bg-black text-black dark:text-white overflow-x-hidden">
@@ -368,6 +377,8 @@
         <input bind:checked={valueIsUnderInfo} onchange={onChangeCheckUnderInfo} type="checkbox" title="La info es variable hacia abajo por lo que activar esto en un texto lo pondrá abajo" class="size-5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" disabled={isDisabledUnderInfo}>
 
         <button class="btn-realista" onclick={onSave}>Guardar</button>
+
+        <button class="btn-realista" onclick={onProbar}>Probar</button>
 
     </div>
     

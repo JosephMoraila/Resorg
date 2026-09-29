@@ -1,12 +1,13 @@
 use crate::db::{Pedido, obtener_conexion_db, MetodoPago,};
 use rusqlite::{Connection, params};
 use crate::utils::{descapitalizar,};
+use crate::printing::{print_cobrar};
 
 const COBRADO: &str = "cobrado";
 
 #[tauri::command]
-pub fn cobrar_pedido(pedido: Pedido, metodo_pago: MetodoPago, contenido_ticket: String) -> Result<(), String> {
-    let mut conn = obtener_conexion_db()?;
+pub fn cobrar_pedido(pedido: Pedido, metodo_pago: MetodoPago, info_tocket: String) -> Result<(), String> {
+    let mut conn: Connection = obtener_conexion_db()?;
 
     // Iniciamos la transacción
     let tx = conn.transaction().map_err(|e| e.to_string())?;
@@ -26,6 +27,8 @@ pub fn cobrar_pedido(pedido: Pedido, metodo_pago: MetodoPago, contenido_ticket: 
 
     // Confirmamos la transacción para guardar los cambios permanentemente
     tx.commit().map_err(|e| e.to_string())?;
+
+    print_cobrar(info_tocket)?;
 
     Ok(())
 }

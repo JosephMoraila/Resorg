@@ -6,6 +6,7 @@
   let impresoras = $state<string[]>([]);
   let impresoraSeleccionada = $state("");
   let imprimirAlCrearOrden: boolean = $state(false);
+  let imprimirAlCobrar: boolean = $state(false);
 
   onMount(() => {
     const getPrinters = async () => {
@@ -13,18 +14,17 @@
       impresoras = impresorasBackend;
     };
     const loadData = async () => {
-      const [printerNameBackend, isPrintOrderBackend] = await invoke<[string, boolean]>(
-        "get_printting_settings"
-      );
+      const [printerNameBackend, isPrintOrderBackend, isImprimirAlCobrar] = await invoke<[string, boolean, boolean]>("get_printting_settings");
       impresoraSeleccionada = printerNameBackend;
       imprimirAlCrearOrden = isPrintOrderBackend;
+      imprimirAlCobrar = isImprimirAlCobrar;
     };
     getPrinters();
     loadData();
   });
 
   async function guardarConfiguracion() {
-    const params = { printerName: impresoraSeleccionada, isPrintOrder: imprimirAlCrearOrden };
+    const params = { printerName: impresoraSeleccionada, isPrintOrder: imprimirAlCrearOrden, isImprimirAlCobrar: imprimirAlCobrar};
     try {
       await invoke("save_printting_settings", params);
     } catch (error) {
@@ -41,14 +41,13 @@
     <select
       bind:value={impresoraSeleccionada}
       onchange={guardarConfiguracion}
-      class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      style="color: #111827;"
+      class="form-select w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-[#1a1f2e] text-gray-900 dark:text-white border-gray-300 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <option value="" disabled selected style="color: #6b7280;">
+      <option value="" disabled selected class="text-gray-500">
         Selecciona una impresora
       </option>
       {#each impresoras as impresora}
-        <option value={impresora} style="color: #111827;">{impresora}</option>
+        <option class="bg-white dark:bg-[#1a1f2e] text-gray-900 dark:text-white" value={impresora}>{impresora}</option>
       {/each}
     </select>
 
@@ -63,5 +62,18 @@
         Imprimir al crear orden
       </span>
     </label>
+
+    <label class="flex items-center gap-2 mb-5 cursor-pointer select-none mt-5">
+      <input
+        type="checkbox"
+        bind:checked={imprimirAlCobrar}
+        onchange={guardarConfiguracion}
+        class="w-4 h-4 rounded border-gray-300 dark:border-white/20 text-teal-600 focus:ring-teal-500 focus:ring-2 accent-teal-600"
+      />
+      <span class="text-sm font-medium text-gray-900 dark:text-white">
+        Imprimir al cobrar
+      </span>
+    </label>
+
   </div>
 </main>

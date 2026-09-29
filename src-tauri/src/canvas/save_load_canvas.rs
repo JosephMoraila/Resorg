@@ -14,22 +14,28 @@ pub struct CanvasElement{
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TextCanvasElement{
-  texto: String,
-  size: u32,
-  is_under_info: bool,
+  pub texto: String,
+  pub size: u32,
+  pub is_under_info: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ImageCanvasElement{
-  src: String,
-  alto: u32,
-  ancho: u32,
+  pub src: String,
+  pub alto: u32,
+  pub ancho: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct InfoCanvasElement{
-  texto: String,
-  size: u32,
+  pub texto: String,
+  pub size: u32,
+}
+
+impl InfoCanvasElement {
+    pub fn replace_text(&mut self, new_text: String){
+        self.texto = new_text;
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

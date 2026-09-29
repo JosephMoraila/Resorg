@@ -1,4 +1,4 @@
-use base64::{Engine as _, engine::general_purpose};
+use base64::{engine::general_purpose};
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use std::fs;
@@ -47,4 +47,16 @@ pub fn imagen_a_base64(ruta: &str) -> Result<String, String> {
     let base64_string: String = STANDARD.encode(&bytes);
 
     Ok(base64_string)
+}
+
+pub fn base64_to_bytes(src: &str) -> Result<Vec<u8>, String> {
+    // quitar el prefijo "data:image/png;base64," si existe
+    let src_clean: &str = if src.contains(",") {
+        src.split(",").nth(1).unwrap_or(src)
+    } else {
+        src
+    };
+
+    let bytes_image: Vec<u8> = general_purpose::STANDARD.decode(src_clean).map_err(|e| e.to_string())?;
+    Ok(bytes_image)
 }

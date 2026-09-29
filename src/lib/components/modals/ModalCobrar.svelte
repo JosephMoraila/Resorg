@@ -36,7 +36,7 @@
         }
         contenidoTicket += `Nombre: ${returnEmptyStringIfNullOrUndefined(pedidoPendiente.nombre_cliente)}\n${formatearFechaDB(pedidoPendiente.fecha_hora)}\n`;
         if(pedidoPendiente.info_tipo_pedido.tipo == "Local"){
-            contenidoTicket += `Mesero: ${returnEmptyStringIfNullOrUndefined(pedidoPendiente.info_tipo_pedido.mesero)}`;
+            contenidoTicket += `Mesero: ${returnEmptyStringIfNullOrUndefined(pedidoPendiente.info_tipo_pedido.mesero)}\n`;
         }else if(pedidoPendiente.info_tipo_pedido.tipo == "Domicilio"){
             contenidoTicket += `Colonia: ${returnEmptyStringIfNullOrUndefined(pedidoPendiente.info_tipo_pedido.colonia)}\nCalle: ${returnEmptyStringIfNullOrUndefined(pedidoPendiente.info_tipo_pedido.calle)}\nNúmero interior/exterior: ${returnEmptyStringIfNullOrUndefined(pedidoPendiente.info_tipo_pedido.numero_interior_exterior)}\nTeléfono: ${returnEmptyStringIfNullOrUndefined(pedidoPendiente.info_tipo_pedido.telefono)}\n`;
         }
