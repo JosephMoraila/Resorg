@@ -19,6 +19,14 @@
     invoke("enfocar_ventana", paramEnfocarVentana);
   }
 
+  function onVerTodasOrdenes(){
+    const value = `ver-ordenes-general-${crypto.randomUUID()}`;
+    const objVerOrdenesGeneral = {title: "Ver ordenes general", url: "/ver-ordenes-general", height: 800, width: 1200,};
+    new WebviewWindow(value, {...objVerOrdenesGeneral, center: true, visible: true});
+    const paramEnfocarVentana = {label: value};
+    invoke("enfocar_ventana", paramEnfocarVentana);
+  }
+
 </script>
 
 <main class="w-full h-screen flex flex-col overflow-hidden">
@@ -28,6 +36,7 @@
     <div>
       <button class="btn-realista" onclick={onRegistrarOrden}>Registrar orden</button>
       <button class="btn-realista" onclick={onVerOrdenesPendientes}>Ver ordenes pendientes</button>
+      <button class="btn-realista" onclick={onVerTodasOrdenes}>Ver ordenes general</button>
     </div>
 
   </div>

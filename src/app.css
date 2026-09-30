@@ -56,4 +56,17 @@
     .tabla-badge {
         @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400;
     }
+
+    .tabla-badged-cancelado {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-600 text-red-300 dark:text-red-500 dark:bg-red-300;
+    }
+    .tabla-badged-cobrado{
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-600 text-green-100;
+    }
+    .tabla-badged-entregado{
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-600 text-blue-100;
+    }
+    .tabla-badged-finalizado{
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-800 text-gray-100 dark:bg-gray-100 dark:text-gray-800;
+    }
 }

@@ -3,7 +3,7 @@
     import { getCurrentWindow} from "@tauri-apps/api/window";
     import { onMount } from "svelte";
     import type { Pedido, PedidoPlatillo, UpdatePlatilloPedido } from "$lib/types";
-    import { formatearMoneda, returnEmptyStringIfNullOrUndefined, formatearFechaDB, obtenerTextoTipoPedido, obtenerTextoEstadoPedido } from "$lib/utils/string_utils";
+    import { formatearMoneda, returnEmptyStringIfNullOrUndefined,obtenerTextoMetodoPago, formatearFechaDB, obtenerTextoTipoPedido, obtenerTextoEstadoPedido } from "$lib/utils/string_utils";
     import { HayAlMenosUnPlatilloExistente, HayAlMenosUnaDescripcionNoNullPlatilloOriginal, GetDescripcionPlatilloOriginal } from "$lib/utils/object_utils";
     import ModalCambiarInfoOrden from "$lib/components/modals/ModalCambiarInfoOrden.svelte";
     import { toast } from "$lib/toast.svelte";
@@ -94,6 +94,29 @@
             toast.rojo(`Error al imprimir orden: ${error}`);
         }
     }
+
+    function imprimirCobrado(){
+        if(pedido === null) return;
+
+        let contenidoTicket = `Total: ${formatearMoneda(pedido.total)} ${obtenerTextoTipoPedido(pedido.tipo)}\nMétodo de pago: ${obtenerTextoMetodoPago(pedido.metodo_pago!)}\n`;
+        contenidoTicket += `Nombre: ${returnEmptyStringIfNullOrUndefined(pedido.nombre_cliente)}\n${formatearFechaDB(pedido.fecha_hora)}\n`;
+        if(pedido.info_tipo_pedido.tipo == "Local"){
+            contenidoTicket += `Mesero: ${returnEmptyStringIfNullOrUndefined(pedido.info_tipo_pedido.mesero)}\n`;
+        }else if(pedido.info_tipo_pedido.tipo == "Domicilio"){
+            contenidoTicket += `Colonia: ${returnEmptyStringIfNullOrUndefined(pedido.info_tipo_pedido.colonia)}\nCalle: ${returnEmptyStringIfNullOrUndefined(pedido.info_tipo_pedido.calle)}\nNúmero interior/exterior: ${returnEmptyStringIfNullOrUndefined(pedido.info_tipo_pedido.numero_interior_exterior)}\nTeléfono: ${returnEmptyStringIfNullOrUndefined(pedido.info_tipo_pedido.telefono)}\n`;
+        }
+        for(const pl of pedido.platillos_pedidos){
+            contenidoTicket += `${pl.name} - ${formatearMoneda(pl.precio)}\n`;
+        }
+
+        let param = {pedido, contenidoTicket};
+        try{
+            invoke("print_again_cobro_ticket", param);
+        }catch(err){
+            const error = err as string;
+            toast.rojo(`Error al imprimir ticket de cobro: ${error}`);
+        }
+    }
 </script>
 
 <main class="min-h-screen w-full bg-white dark:bg-black text-black dark:text-white flex flex-col items-center overflow-x-hidden">
@@ -153,11 +176,19 @@
             {:else if pedido.info_tipo_pedido.tipo == "Recoger"}
                 <span><strong>ID tipo recoger:</strong> {pedido.info_tipo_pedido.id}</span>
             {/if}
+            {#if pedido.metodo_pago !== null}
+                <span>|</span>
+                <span><strong>Método de pago:</strong> {obtenerTextoMetodoPago(pedido.metodo_pago)}</span>
+            {/if}
         </div>
 
         <div class="flex flex-row items-center gap-4 flex-nowrap overflow-x-auto pb-2 w-full max-w-full">
+        {#if pedido.estado == "Pendiente"}
             <button onclick={onAbrirModalChangeInfo} class="btn-realista items-start! justify-start!">Cambiar información</button>
-            <button onclick={onAbrirModalChangePlatillos} class="btn-realista items-start! justify-start!">Cambiar platillos</button>
+            <button onclick={onAbrirModalChangePlatillos} class="btn-realista items-start! justify-start!">Cambiar platillos</button>      
+        {:else if pedido.estado == "Cobrado"}
+            <button onclick={imprimirCobrado} class="btn-realista items-start! justify-start!">Imprimir ticket de cobro</button>
+        {/if}
             <button onclick={imprimirOrden} class="btn-realista items-start! justify-start!">Imprimir orden</button>
         </div>
 

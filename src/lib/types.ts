@@ -112,7 +112,7 @@ export interface FiltrosVerOrdenesProps{
   totalDesde: null | number; totalHasta: null | number;
   nota: null | string;
   estatus: null | EstadoPedido;
-  metodo_pago: MetodoPago | null;
+  metodoPago: MetodoPago | null;
 }
 
 export interface FilaPlatillo {

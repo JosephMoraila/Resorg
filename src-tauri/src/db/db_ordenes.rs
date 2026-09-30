@@ -330,6 +330,7 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
 
 #[tauri::command]
 pub fn count_ordenes(id: Option<u64>,tipo_pedido: Option<TipoPedido>,nombre_cliente: Option<String>,fecha_inicio: Option<String>,fecha_fin: Option<String>,total_desde: Option<f64>,total_hasta: Option<f64>,nota: Option<String>,estatus: Option<EstadoPedido>, metodo_pago: Option<MetodoPago>) -> Result<i64, String> {
+    println!("Metodo pago option: {:?}", metodo_pago);
     let conn: Connection = obtener_conexion_db()?;
     let mut comando: String = String::from("SELECT COUNT(*) FROM pedidos");
     let mut parametros: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
@@ -366,6 +367,7 @@ pub fn count_ordenes(id: Option<u64>,tipo_pedido: Option<TipoPedido>,nombre_clie
         if let Some(metodo_pago_some) = metodo_pago { 
             let str_some: String = metodo_pago_some.to_string();
             let lower: String = descapitalizar(&str_some);
+            print!("Pasó por aquí: {}", metodo_pago_some);
             let text_param: String = format!("id IN (SELECT pedido_id FROM pedidos_pagados WHERE metodo = ?{})",numero_parametro);
             let caja: Box<String> = Box::new(lower);
             let caja_as: Box<dyn ToSql> = caja as Box<dyn rusqlite::ToSql>;
@@ -536,7 +538,7 @@ fn obtener_metodo_pago_by_pedido_id(pedido_id: u64)->Result<Option<MetodoPago>, 
     let comando: &str = "SELECT metodo FROM pedidos_pagados WHERE pedido_id = ?1;";
 
     let resultado_query: Result<String, rusqlite::Error> = conn.query_row(comando, params, |row|{
-        let metodo_pago_lower: String = row.get::<&str, String>("pedidos_pagados")?;
+        let metodo_pago_lower: String = row.get::<&str, String>("metodo")?;
         Ok(metodo_pago_lower)
     });
 

@@ -1,27 +1,30 @@
 <script lang="ts">
 
-    import { flatpickrAction } from '$lib/actions/flatpickr';
+    import type { TipoPedido, Pedido, FiltrosVerOrdenesProps, EstadoPedido, MetodoPago } from "$lib/types";
+    import { invoke } from "@tauri-apps/api/core";
+    import { formatearFechaUTC, obtenerRangoDeHoy, procesarCadenaHora } from "$lib/utils/date_utils";
+    import { parsearNumeroOpcional, calcularTotalPaginas } from "$lib/utils/math_utils";
+    import { toast } from "$lib/toast.svelte";
+    import { flatpickrAction } from "$lib/actions/flatpickr";
     import 'flatpickr/dist/flatpickr.min.css';
     import '$lib/styles/flatpickr-dark.css';
-    import { obtenerRangoDeHoy, formatearFechaUTC, procesarCadenaHora} from '$lib/utils/date_utils';
-    import { parsearNumeroOpcional, calcularTotalPaginas } from '$lib/utils/math_utils';
-    import { toast } from '$lib/toast.svelte';
-    import { invoke } from '@tauri-apps/api/core';
-
-    import type { TipoPedido, Pedido, FiltrosVerOrdenesProps } from "$lib/types";
 
     interface Props{
-        pedidosPendientes: Pedido[];
+        pedidos: Pedido[];
         filters: FiltrosVerOrdenesProps;
-        totalPedidosPendientes: number;
+        totalPedidos: number;
         paginasTotales: number;
         selectedId: number | null;
     }
 
-    let {pedidosPendientes = $bindable(), selectedId = $bindable(),filters = $bindable(), totalPedidosPendientes = $bindable(), paginasTotales = $bindable()}:Props = $props();
+    const PAGINA_TAMANO = 50;
+
+    let {pedidos = $bindable(), selectedId = $bindable(),filters = $bindable(), totalPedidos = $bindable(), paginasTotales = $bindable()}:Props = $props();
 
     let idInput: number | null = $state<number | null>(null);
     let tipoInput: TipoPedido | "" = $state<TipoPedido | "">("");
+    let estadoInput: EstadoPedido | "" = $state<EstadoPedido | "">("");
+    let metodoPagoInput: MetodoPago | "" = $state<MetodoPago | "">("");
     let nombreClienteInput = $state<string>("");
     const {inicio, fin} = obtenerRangoDeHoy();
     let dateInicio = $state<string>(formatearFechaUTC(inicio));
@@ -29,8 +32,6 @@
     let totalDesde = $state("");
     let totalHasta = $state("");
     let nota = $state("");
-
-    const PAGINA_TAMANO = 50;
 
     function incrementarId() {
         if (idInput !== null) {
@@ -60,6 +61,19 @@
             definitiveTipoInput = tipoInput;
         }
 
+        let definitiveEstadoInput: null | EstadoPedido = null;
+        if(estadoInput !== ""){
+            definitiveEstadoInput = estadoInput;
+        }
+
+        let definitiveMetodoPago: null | MetodoPago = null;
+        if(estadoInput == "Cobrado"){
+            if(metodoPagoInput !== ""){
+                definitiveMetodoPago = metodoPagoInput;
+            }
+        }
+        console.log(`Estado: ${estadoInput}. DefinitiveMetodoPago: ${definitiveMetodoPago}`);
+
         let definitiveNombreCliente: string | null = null;
         if(nombreClienteInput.trim() != "") definitiveNombreCliente = nombreClienteInput.trim();
 
@@ -74,21 +88,21 @@
         let definitiveNota: string | null = null;
         if(nota.trim() != "") definitiveNota = nota.trim();
 
-        const paramsFiltro: FiltrosVerOrdenesProps = {id: definitiveIdInput, tipoPedido: definitiveTipoInput, nombreCliente: definitiveNombreCliente, fechaInicio: definitiveFechaInicio, fechaFin: definitiveFechaFin, totalDesde: definitiveTotalDesde, totalHasta: definitiveTotalHasta, nota: definitiveNota, estatus: "Pendiente", metodoPago: null};
+        const paramsFiltro: FiltrosVerOrdenesProps = {id: definitiveIdInput, tipoPedido: definitiveTipoInput, nombreCliente: definitiveNombreCliente, fechaInicio: definitiveFechaInicio, fechaFin: definitiveFechaFin, totalDesde: definitiveTotalDesde, totalHasta: definitiveTotalHasta, nota: definitiveNota, estatus: definitiveEstadoInput, metodoPago: definitiveMetodoPago};
         const paramsFunc = {paginaFrontend: 1, ...paramsFiltro}; //Como es buscar nuevos filtros se empieza del 1
         const paramsCount = {...paramsFiltro};
         try{
             const dataBckend = await invoke<Pedido[]>("obtener_ordenes", paramsFunc);
-            pedidosPendientes = dataBckend;
+            pedidos = dataBckend;
             filters = paramsFiltro;
             selectedId = null;
             const resultadosTotalesBackend = await invoke<number>("count_ordenes", paramsCount);
-            totalPedidosPendientes = resultadosTotalesBackend;
-            paginasTotales = calcularTotalPaginas(totalPedidosPendientes, PAGINA_TAMANO);
+            totalPedidos = resultadosTotalesBackend;
+            paginasTotales = calcularTotalPaginas(totalPedidos, PAGINA_TAMANO);
         }catch (error) {
             const err = error as string;
-            console.error("Error al obtener los pedidos pendientes:", err);
-            toast.rojo(`Error al obtener los pedidos pendientes: ${err}`);
+            console.error("Error al obtener los pedidos:", err);
+            toast.rojo(`Error al obtener los pedidos: ${err}`);
         }
     }
 
@@ -97,6 +111,7 @@
             buscarFiltros();
         }
     }
+
 </script>
 
 <div class="flex flex-row items-center gap-4 flex-nowrap overflow-x-auto pb-2 w-full max-w-full">
@@ -122,6 +137,29 @@
             <option value="Recoger">Recoger</option>
         </select>
     </div>
+    <div class="flex flex-row items-center gap-2 shrink-0 whitespace-nowrap">
+        <span>Estado:</span>
+        <select bind:value={estadoInput} class="form-select border rounded px-2 py-1 bg-white dark:bg-[#1a1f2e] text-gray-900 dark:text-white border-gray-300 dark:border-white/20">
+            <option value="">Todos</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Finalizado">Finalizado</option>
+            <option value="Cancelado">Cancelado</option>
+            <option value="Entregado">Entregado</option>
+            <option value="Cobrado">Cobrado</option>
+        </select>
+    </div>
+    {#if estadoInput == "Cobrado"}
+    <div class="flex flex-row items-center gap-2 shrink-0 whitespace-nowrap">
+        <span>Método de pago:</span>
+        <select bind:value={metodoPagoInput} class="form-select border rounded px-2 py-1 bg-white dark:bg-[#1a1f2e] text-gray-900 dark:text-white border-gray-300 dark:border-white/20">
+            <option value="">Todos</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Tarjeta">Tarjeta</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Mixto">Mixto</option>
+        </select>
+    </div>    
+    {/if}
     <div class="flex flex-row items-center gap-2 shrink-0 whitespace-nowrap">
         <span>Nombre cliente:</span>
         <input type="text" onkeydown={onEnterDown} bind:value={nombreClienteInput} class="border w-40 rounded px-2 shrink-0">

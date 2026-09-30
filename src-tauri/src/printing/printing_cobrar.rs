@@ -1,3 +1,4 @@
+use crate::db::Pedido;
 use crate::printer::{get_printting_settings};
 use crate::ticket::{get_ticket_measurement};
 use crate::canvas::{CanvasElement, get_canvas, TypeElement};
@@ -46,5 +47,26 @@ fn print_canvas_cobrar(texto_info: String, printer_name: &str)-> Result<(), Stri
     #[cfg(not(target_os = "windows"))]{
         return Err(String::from("Canvas no disponible en este sistema operativo"));
     }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn print_again_cobro_ticket(pedido: Pedido, contenido_ticket: String)->Result<(), String>{
+    let (printer_name, _ , _) = get_printting_settings()?;
+    let (width, _, is_canvas) = get_ticket_measurement()?;
+
+    if is_canvas{
+        print_canvas_cobrar(contenido_ticket, &printer_name)?;
+    }else {//Escpos, aqui es diferente
+        let escpos_elements: Vec<EscposElement> = escpos_html_escpos_elements()?;
+        //Cambiamos el ejemplo de info por la info verdadera
+        let replaced_info_elements: Vec<EscposElement> = EscposInfoElement::replace_info(escpos_elements, contenido_ticket);
+        let bytes_escpos_elements: Vec<u8> = escposelement_to_bytes(&replaced_info_elements, width)?;
+        #[cfg(target_os = "windows")]
+        let _ = imprimir_raw_windows(&printer_name, &bytes_escpos_elements)?;
+        #[cfg(target_os = "linux")]
+        let _ = imprimir_raw_linux(&printer_name, &bytes_escpos_elements)?;
+    }
+
     Ok(())
 }
