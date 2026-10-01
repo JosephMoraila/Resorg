@@ -161,3 +161,9 @@ export interface CanvasElement{
   element: TextCanvasElement | ImageCanvasElement | InfoCanvasElement;
 }
 
+//Graficas:
+
+export interface ConteoPedidosPorFecha {
+  fecha: Date;
+  total: number;
+}

@@ -89,7 +89,7 @@
 <main class="min-h-screen w-full bg-white dark:bg-black text-black dark:text-white flex flex-col items-center overflow-x-hidden">
 
     <Filtros bind:selectedId={selectedId} bind:pedidos={pedidos} bind:filters={filters} bind:totalPedidos={totalPedidos} bind:paginasTotales={paginasTotales}/>
-    <BotonesVerMas pedidos={pedidos} selectedId={selectedId} totalPedidos={totalPedidos}/>
+    <BotonesVerMas pedidos={pedidos} selectedId={selectedId} totalPedidos={totalPedidos} filters={filters}/>
 
     <div class="w-full overflow-x-auto border-y border-gray-200 dark:border-gray-800 shadow-sm">
         <table class="tabla-estilizada">

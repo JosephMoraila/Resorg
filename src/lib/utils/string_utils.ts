@@ -111,6 +111,7 @@ export function formatearFechaDB(fechaStr: string): string {
     day: "2-digit",
     month: "long",
     year: "numeric",
+    weekday: 'long',
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -195,4 +196,69 @@ export function obtenerTextoMetodoPago(metodoPago: MetodoPago){
   else if(metodoPago == "Transferencia") texto = "Transferencia";
 
   return texto;
+}
+
+/**
+ * Quita todos los espacios de lados y en medio
+ * @param texto Texto a quitar espacios por ejemplo " Hola  mundo  "
+ * @returns Texto todo pegado como "Holamundo"
+ */
+export function quitarTodosLosEspacios(texto: string | null): string {
+  let newText = "";
+  if(typeof texto === "string"){
+    newText = texto.replace(/\s+/g, '');
+  }else if(texto === null){
+    newText = "null";
+  }
+  return newText;
+}
+
+/**
+ * Formatea fecha tal como viene,
+ * @param fechaStr Por ejemplo: "2026-09-30 23:59:00"
+ * @returns Algo como: "30 de septiembre de 2026, 23:59:00" o en el idioma de la PC
+ */
+export function formatearFechaTalComoViene(fechaStr: string): string {
+  // Parseamos los números tal cual vienen, sin ninguna interpretación de zona horaria
+  const [fecha, hora] = fechaStr.split(" ");
+  const [anio, mes, dia] = fecha.split("-").map(Number);
+  const [horas, minutos, segundos] = (hora ?? "00:00:00").split(":").map(Number);
+
+  // new Date(año, mes, día, ...) SIEMPRE se interpreta como hora LOCAL,
+  // sin ningún desplazamiento de zona horaria — los números quedan exactamente como vienen
+  const fechaObj = new Date(anio, mes - 1, dia, horas, minutos, segundos);
+
+  const opciones: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  };
+  return fechaObj.toLocaleString(undefined, opciones);
+}
+
+/**
+ * Formatea un objeto Date en una cadena de texto legible y descriptiva.
+ * Utiliza automáticamente el idioma y la región configurados en el equipo del usuario.
+ * 
+ * @example
+ * // Ejemplo de salida: "lunes, 28 de septiembre de 2026"
+ * const texto = formatearFechaBonito(new Date());
+ * 
+ * @param fecha - El objeto Date exacto que se desea convertir.
+ * @returns La fecha formateada en texto (incluyendo día de la semana, día, mes y año).
+ */
+export function formatearFechaBonito(fecha: Date): string {
+  const opciones: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  };
+  
+  // 'undefined' usa el idioma y región locales de la PC
+  return fecha.toLocaleDateString(undefined, opciones);
 }

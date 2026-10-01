@@ -60,3 +60,26 @@ export function TruncarToEnteroPositivo(numero: number): number{
     const truncado = Math.trunc(cant); //Si el numero original tiene algun decimal lo cortamos y lo dejamos en entero
     return truncado;
 }
+
+/**
+ * Toma un string de fecha y solo da el año, mes y dia como number
+ * @param datetime Fecha en formato string: Ejemplo: "2026-09-29 03:10:45"
+ * @returns Objeto con año, mes y dia. Ejemplo: {anio: 2026, mes: 8, dia: 29}
+ */
+export function getArrayYearMonthDayFromStringDatetime(datetime: string): {anio: number;mes: number;dia: number;}{
+    const partes = datetime.split(" ");
+    const soloFecha = partes[0];
+    const partesFecha = soloFecha.split("-");
+    const anioString = partesFecha[0];
+    const mesString = partesFecha[1];
+    const diaString = partesFecha[2];
+    const anioInt = parseInt(anioString);
+    const mesInt = parseInt(mesString);
+    const diaInt = parseInt(diaString);
+
+    const anio = Number.isNaN(anioInt) ? 2026 : anioInt;
+    const mes = Number.isNaN(mesInt) ? 0 : mesInt - 1; //Enero. En caso que sea valido menos uno porque viene con mes con su numero exacto y en Date es de 0 a 11
+    const dia = Number.isNaN(diaInt) ? 1 : diaInt; //Dia 1
+
+    return {anio, mes, dia};
+}

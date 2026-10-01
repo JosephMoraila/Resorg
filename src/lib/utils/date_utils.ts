@@ -1,3 +1,5 @@
+import { getArrayYearMonthDayFromStringDatetime } from "./math_utils";
+
 /**
  * Obtiene el rango de fechas correspondiente al día de hoy,
  * desde las 00:00:00.000 hasta las 23:59:59.999, usando la
@@ -83,4 +85,23 @@ export function procesarCadenaHora(cadena: string): string {
     
     // Reconstruye la cadena completa uniendo la fecha y la hora procesada mediante un espacio
     return partes.join(' ');
+}
+
+/**
+ * Regresa solo un objeto Date por las fechas sin horas
+ * @param datetime Datetime tipo String
+ * @returns Objeto Date solo con fecha
+ */
+export function getOnlyDateObjectByOnlyDatetime(fechaStr: string): Date {
+  // 1. Convertir a formato ISO indicando que viene en UTC (Igual que tu tabla)
+  const fechaISO = fechaStr.replace(" ", "T") + "Z";
+  const fechaUTC = new Date(fechaISO);
+
+  // 2. Extraer el año, mes y día pero ya en la HORA LOCAL de la PC
+  const anio = fechaUTC.getFullYear();
+  const mes = fechaUTC.getMonth();
+  const dia = fechaUTC.getDate();
+
+  // 3. Retornar un objeto Date a las 00:00:00 en tu zona horaria local
+  return new Date(anio, mes, dia);
 }

@@ -27,6 +27,9 @@ use crate::canvas::{save_canvas, get_canvas};
 mod ticket;
 use crate::ticket::{save_ticket_measurement, get_ticket_measurement};
 
+mod graficos;
+use crate::graficos::{GraficaPedidosFiltrosCompartido, guardar_pedidos_filtros_compartido, obtener_pedidos_filtros_compartido};
+
 pub static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -47,14 +50,16 @@ pub fn run() {
             obtener_ordenes, count_ordenes, guardar_pedido_compartido ,obtener_pedido_compartido,
             update_pedido, update_platillos_orden, cobrar_pedido,
             save_canvas, save_ticket_measurement, save_escpos_html, get_ticket_measurement, get_canvas, get_escpos_html,
-            print_prueba, print_again_order_escpos, print_again_cobro_ticket
+            print_prueba, print_again_order_escpos, print_again_cobro_ticket,
+            guardar_pedidos_filtros_compartido, obtener_pedidos_filtros_compartido
         ])
         .setup(|app| {
             APP_HANDLE.set(app.handle().clone()).unwrap();
             inicializar_tablas()?;
             Ok(())
         })
-        .manage(PedidoCompartido(Mutex::new(HashMap::new())))
+        .manage(PedidoCompartido(Mutex::new(HashMap::new())),)
+        .manage(GraficaPedidosFiltrosCompartido(Mutex::new(HashMap::new())),)
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
