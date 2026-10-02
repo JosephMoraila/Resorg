@@ -163,7 +163,74 @@ export interface CanvasElement{
 
 //Graficas:
 
+export interface DataSeries {
+  count?: number;
+  min?: number;
+  max?: number;
+  value?: string;
+  keys?: string[];
+}
+
 export interface ConteoPedidosPorFecha {
   fecha: Date;
   total: number;
+}
+
+export interface ConteoPedidosPorTipo{
+  fecha: Date;
+  tipoLocal: number;
+  tipoDomicilio: number;
+  tipoRecoger: number;
+}
+
+export interface ConteoTotalRecaudadoPorFecha {
+  fecha: Date;
+  total: number;
+}
+
+export interface ConteoEstadoPedidosPorFecha {
+  fecha: Date;
+  pendiente: number;
+  finalizado: number;
+  cancelado: number;
+  entregado: number;
+  cobrado: number;
+}
+
+export interface ConteoTotalRecaudadoPorTipoPorFecha {
+  fecha: Date;
+  totalTipoLocal: number;
+  totalTipoDomicilio: number;
+  totalTipoRecoger: number;
+}
+
+export interface ConteoPlatillosMasVendidosPorFecha {
+  fecha: Date;
+  platillos: {
+    total_recaudado: number;
+    nombre: string;
+    cantidad_vendida: number;
+  }[];
+}
+
+//Graficos Pie:
+
+export interface GeneralTipoPedidoPie{
+  tipoLocal: number;
+  tipoDomicilio: number;
+  tipoRecoger: number;
+}
+
+export interface GeneralEstadoPedidoPie {
+  pendiente: number;
+  finalizado: number;
+  cancelado: number;
+  entregado: number;
+  cobrado: number;
+}
+
+export interface GeneralPlatillosPie{
+  nombre: string;
+  cantidad_vendida: number;
+  total_recaudado: number;
 }
