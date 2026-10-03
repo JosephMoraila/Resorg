@@ -16,5 +16,4 @@ impl EscposCommands {
     pub const ALINEAR_IZQUIERDA: [u8; 3] = [Self::ESC, 0x61, 0x00];
     pub const TEXTO_GRANDE: [u8; 3] = [Self::GS, 0x21, 0x11];
     pub const TEXTO_NORMAL: [u8; 3] = [Self::GS, 0x21, 0x00];
-    
 }

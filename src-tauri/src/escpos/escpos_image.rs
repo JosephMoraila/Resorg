@@ -1,4 +1,4 @@
-use image::{DynamicImage, GenericImageView, imageops::FilterType};
+use image::{imageops::FilterType, DynamicImage, GenericImageView};
 
 // ─────────────────────────────────────────────
 // Detectar ancho máximo según nombre de impresora
@@ -135,11 +135,14 @@ pub fn convert_to_raster_dithered(img: &DynamicImage, target_width: u32) -> Vec<
             }
             if y + 1 < height {
                 if x > 0 {
-                    gray_buffer[idx + width - 1] = (gray_buffer[idx + width - 1] + error * 3 / 16).clamp(0, 255);
+                    gray_buffer[idx + width - 1] =
+                        (gray_buffer[idx + width - 1] + error * 3 / 16).clamp(0, 255);
                 }
-                gray_buffer[idx + width] = (gray_buffer[idx + width] + error * 5 / 16).clamp(0, 255);
+                gray_buffer[idx + width] =
+                    (gray_buffer[idx + width] + error * 5 / 16).clamp(0, 255);
                 if x + 1 < width {
-                    gray_buffer[idx + width + 1] = (gray_buffer[idx + width + 1] + error * 1 / 16).clamp(0, 255);
+                    gray_buffer[idx + width + 1] =
+                        (gray_buffer[idx + width + 1] + error * 1 / 16).clamp(0, 255);
                 }
             }
         }
@@ -168,7 +171,12 @@ pub fn convert_to_raster_dithered(img: &DynamicImage, target_width: u32) -> Vec<
 // ─────────────────────────────────────────────
 // Crear comando raster GS v 0
 // ─────────────────────────────────────────────
-pub fn create_raster_command(width: usize, height: usize, raster_data: &[u8], density: u8) -> Vec<u8> {
+pub fn create_raster_command(
+    width: usize,
+    height: usize,
+    raster_data: &[u8],
+    density: u8,
+) -> Vec<u8> {
     let width_bytes = (width + 7) / 8;
     let mut cmd: Vec<u8> = Vec::with_capacity(8 + raster_data.len());
 
@@ -232,8 +240,11 @@ pub fn mm_to_pixels(mm: f32, dpi: u32) -> u32 {
 /// let bytes = image_to_escpos_bytes(&img, false, true, 576);
 /// imprimir_raw_windows("EPSON TM-T20", &bytes).unwrap();
 /// ```
-pub fn image_to_escpos_bytes(img: &DynamicImage,use_dithering: bool,center_image: bool,
-    max_width: u32,         // 0 = usar ancho original
+pub fn image_to_escpos_bytes(
+    img: &DynamicImage,
+    use_dithering: bool,
+    center_image: bool,
+    max_width: u32, // 0 = usar ancho original
 ) -> Vec<u8> {
     let mut commands: Vec<u8> = Vec::new();
 
@@ -242,7 +253,11 @@ pub fn image_to_escpos_bytes(img: &DynamicImage,use_dithering: bool,center_image
         commands.extend_from_slice(&[0x1B, 0x61, 0x01]); // ESC a 1
     }
 
-    let target_width: u32 = if max_width > 0 { max_width } else { img.width() };
+    let target_width: u32 = if max_width > 0 {
+        max_width
+    } else {
+        img.width()
+    };
 
     // Redimensionar si es necesario
     let work_img: DynamicImage = if img.width() > target_width {
@@ -274,10 +289,20 @@ pub fn image_to_escpos_bytes(img: &DynamicImage,use_dithering: bool,center_image
             let fragment_size = fragment_height * width_bytes;
 
             let fragment_data = &raster_data[start_byte..start_byte + fragment_size];
-            commands.extend(create_raster_command(final_width, fragment_height, fragment_data, 0));
+            commands.extend(create_raster_command(
+                final_width,
+                fragment_height,
+                fragment_data,
+                0,
+            ));
         }
     } else {
-        commands.extend(create_raster_command(final_width, final_height, &raster_data, 0));
+        commands.extend(create_raster_command(
+            final_width,
+            final_height,
+            &raster_data,
+            0,
+        ));
     }
 
     // Restaurar alineación izquierda

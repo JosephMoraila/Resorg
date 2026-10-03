@@ -1,8 +1,10 @@
-use windows::Win32::Graphics::Printing::{OpenPrinterW, ClosePrinter, StartDocPrinterW, EndDocPrinter,StartPagePrinter, EndPagePrinter, WritePrinter, DOC_INFO_1W,};
-use windows::core::{PCWSTR, PWSTR};
 use crate::windows::to_wide;
-use windows::Win32::Foundation::{HANDLE, BOOL};
-
+use windows::core::{PCWSTR, PWSTR};
+use windows::Win32::Foundation::{BOOL, HANDLE};
+use windows::Win32::Graphics::Printing::{
+    ClosePrinter, EndDocPrinter, EndPagePrinter, OpenPrinterW, StartDocPrinterW, StartPagePrinter,
+    WritePrinter, DOC_INFO_1W,
+};
 
 pub fn imprimir_raw_windows(printer_name: &str, datos: &[u8]) -> Result<(), String> {
     unsafe {
@@ -10,7 +12,12 @@ pub fn imprimir_raw_windows(printer_name: &str, datos: &[u8]) -> Result<(), Stri
         let mut handle_impresora = HANDLE::default();
 
         // Abrir la impresora
-        OpenPrinterW(PCWSTR(print_name_wide.as_ptr()),&mut handle_impresora,None,).map_err(|e| format!("Error abriendo impresora: {}", e))?;
+        OpenPrinterW(
+            PCWSTR(print_name_wide.as_ptr()),
+            &mut handle_impresora,
+            None,
+        )
+        .map_err(|e| format!("Error abriendo impresora: {}", e))?;
 
         let mut doc_nombre: Vec<u16> = to_wide("Test ESP/POS");
         let mut tipo_datos: Vec<u16> = to_wide("RAW");
@@ -29,7 +36,7 @@ pub fn imprimir_raw_windows(printer_name: &str, datos: &[u8]) -> Result<(), Stri
 
         if StartPagePrinter(handle_impresora).as_bool() == false {
             let res_end_doc: BOOL = EndDocPrinter(handle_impresora);
-            if !res_end_doc.as_bool(){
+            if !res_end_doc.as_bool() {
                 return Err("Error al cerrar documento de impresora".to_string());
             }
             ClosePrinter(handle_impresora).ok();
@@ -45,11 +52,11 @@ pub fn imprimir_raw_windows(printer_name: &str, datos: &[u8]) -> Result<(), Stri
         );
 
         let end_page_printer: BOOL = EndPagePrinter(handle_impresora);
-        if !end_page_printer.as_bool(){
+        if !end_page_printer.as_bool() {
             return Err("Error al cerrar página de impresora".to_string());
         }
         let res_end_doc: BOOL = EndDocPrinter(handle_impresora);
-        if !res_end_doc.as_bool(){
+        if !res_end_doc.as_bool() {
             return Err("Error al cerrar documento de impresora".to_string());
         }
         ClosePrinter(handle_impresora).ok();
@@ -61,4 +68,3 @@ pub fn imprimir_raw_windows(printer_name: &str, datos: &[u8]) -> Result<(), Stri
         Ok(())
     }
 }
-

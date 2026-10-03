@@ -1,9 +1,11 @@
-use std::{fmt::{self}};
+use std::fmt::{self};
 
+use crate::db::{
+    calcular_offset, get_platillo_by_id, obtener_conexion_db, Platillo, PAGINACION_50_TAMANO,
+};
+use crate::utils::{capitalizar, convertir_local_a_utc, descapitalizar};
 use rusqlite::{Connection, OptionalExtension, ToSql};
-use crate::db::{PAGINACION_50_TAMANO, Platillo, calcular_offset, obtener_conexion_db, get_platillo_by_id};
 use serde::{Deserialize, Serialize};
-use crate::utils::{descapitalizar, capitalizar, convertir_local_a_utc};
 use std::collections::HashMap;
 use std::sync::Mutex;
 use tauri::State;
@@ -12,40 +14,40 @@ pub struct PedidoCompartido(pub Mutex<HashMap<String, Pedido>>);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 ///Struct de un platillo pedido de manera historica
-pub struct PedidoPlatillo{
+pub struct PedidoPlatillo {
     pub id: u64,
     pub name: String,
     pub precio: f64,
     pub platillo_id: u64,
     pub categoria_id: u64,
     pub pedido_id: u64,
-    pub platillo: Option<Platillo>
+    pub platillo: Option<Platillo>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PedidoLocal{
+pub struct PedidoLocal {
     pub id: u64,
     pub piso: i64,
     pub mesa: u64,
     pub mesero: String,
-    pub pedido_id: u64
+    pub pedido_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PedidoDomicilio{
+pub struct PedidoDomicilio {
     pub id: u64,
     pub colonia: Option<String>,
     pub calle: Option<String>,
     pub numero_interior_exterior: Option<i64>,
     pub telefono: Option<String>,
     pub repartidor: Option<String>,
-    pub pedido_id: u64
+    pub pedido_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PedidoRecoger{
+pub struct PedidoRecoger {
     pub id: u64,
-    pub pedido_id: u64
+    pub pedido_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -59,8 +61,10 @@ pub enum InfoTipoPedido {
     PedidoRecoger(PedidoRecoger),
 }
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
-pub enum TipoPedido{
-    Local, Domicilio, Recoger
+pub enum TipoPedido {
+    Local,
+    Domicilio,
+    Recoger,
 }
 
 impl fmt::Display for TipoPedido {
@@ -75,7 +79,11 @@ impl fmt::Display for TipoPedido {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum EstadoPedido {
-    Pendiente, Finalizado, Cancelado, Entregado, Cobrado
+    Pendiente,
+    Finalizado,
+    Cancelado,
+    Entregado,
+    Cobrado,
 }
 
 impl fmt::Display for EstadoPedido {
@@ -91,8 +99,11 @@ impl fmt::Display for EstadoPedido {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum MetodoPago{
-    Efectivo, Tarjeta, Transferencia, Mixto
+pub enum MetodoPago {
+    Efectivo,
+    Tarjeta,
+    Transferencia,
+    Mixto,
 }
 
 impl fmt::Display for MetodoPago {
@@ -107,7 +118,7 @@ impl fmt::Display for MetodoPago {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Pedido{
+pub struct Pedido {
     pub id: u64,
     pub total: f64,
     pub tipo: TipoPedido,
@@ -117,7 +128,7 @@ pub struct Pedido{
     pub fecha_hora: String,
     pub platillos_pedidos: Vec<PedidoPlatillo>,
     pub info_tipo_pedido: InfoTipoPedido,
-    pub metodo_pago: Option<MetodoPago>
+    pub metodo_pago: Option<MetodoPago>,
 }
 
 impl Pedido {
@@ -126,56 +137,84 @@ impl Pedido {
     /// * `info_tipo_pedido_str` - Un string que representa el tipo de pedido
     /// # Returns
     /// * `InfoTipoPedido` - Un enum que contiene un struct vacío correspondiente
-    fn create_new_info_tipo_pedido_by_name(info_tipo_pedido_str: &str)->InfoTipoPedido{
-        if info_tipo_pedido_str == "local" || info_tipo_pedido_str == "Local"{
-            InfoTipoPedido::PedidoLocal(PedidoLocal{id: 0, piso: 0, mesa: 0, mesero: String::new(), pedido_id: 0})
-        }else if info_tipo_pedido_str == "domicilio" || info_tipo_pedido_str == "Domicilio"{
-            InfoTipoPedido::PedidoDomicilio(PedidoDomicilio{id: 0, colonia: None, calle: None, numero_interior_exterior: None, telefono: None, repartidor: None, pedido_id: 0})
-        }else{
-            InfoTipoPedido::PedidoRecoger(PedidoRecoger{id: 0, pedido_id: 0})
+    fn create_new_info_tipo_pedido_by_name(info_tipo_pedido_str: &str) -> InfoTipoPedido {
+        if info_tipo_pedido_str == "local" || info_tipo_pedido_str == "Local" {
+            InfoTipoPedido::PedidoLocal(PedidoLocal {
+                id: 0,
+                piso: 0,
+                mesa: 0,
+                mesero: String::new(),
+                pedido_id: 0,
+            })
+        } else if info_tipo_pedido_str == "domicilio" || info_tipo_pedido_str == "Domicilio" {
+            InfoTipoPedido::PedidoDomicilio(PedidoDomicilio {
+                id: 0,
+                colonia: None,
+                calle: None,
+                numero_interior_exterior: None,
+                telefono: None,
+                repartidor: None,
+                pedido_id: 0,
+            })
+        } else {
+            InfoTipoPedido::PedidoRecoger(PedidoRecoger {
+                id: 0,
+                pedido_id: 0,
+            })
         }
     }
 
-    pub fn create_new_tipo_pedido_by_name(info_tipo_pedido_str: &str)->TipoPedido{
-        if info_tipo_pedido_str == "local" || info_tipo_pedido_str == "Local"{
+    pub fn create_new_tipo_pedido_by_name(info_tipo_pedido_str: &str) -> TipoPedido {
+        if info_tipo_pedido_str == "local" || info_tipo_pedido_str == "Local" {
             TipoPedido::Local
-        }else if info_tipo_pedido_str == "domicilio" || info_tipo_pedido_str == "Domicilio"{
+        } else if info_tipo_pedido_str == "domicilio" || info_tipo_pedido_str == "Domicilio" {
             TipoPedido::Domicilio
-        }else{
+        } else {
             TipoPedido::Recoger
         }
     }
 
-    fn create_new_estado_pedido_by_name(estatus_str: &str)->EstadoPedido{
-        if estatus_str == "pendiente" || estatus_str == "Pendiente"{
+    fn create_new_estado_pedido_by_name(estatus_str: &str) -> EstadoPedido {
+        if estatus_str == "pendiente" || estatus_str == "Pendiente" {
             EstadoPedido::Pendiente
-        }else if estatus_str == "finalizado" || estatus_str == "Finalizado"{
+        } else if estatus_str == "finalizado" || estatus_str == "Finalizado" {
             EstadoPedido::Finalizado
-        }else if estatus_str == "cancelado" || estatus_str == "Cancelado"{
+        } else if estatus_str == "cancelado" || estatus_str == "Cancelado" {
             EstadoPedido::Cancelado
-        }else if estatus_str == "entregado" || estatus_str == "Entregado"{
+        } else if estatus_str == "entregado" || estatus_str == "Entregado" {
             EstadoPedido::Entregado
-        }else{
+        } else {
             EstadoPedido::Cobrado
         }
     }
 
-    fn create_new_metodo_pago_by_name(metodo_pago_str: &str)->MetodoPago{
-        if metodo_pago_str == "efectivo" || metodo_pago_str == "Efectivo"{
+    fn create_new_metodo_pago_by_name(metodo_pago_str: &str) -> MetodoPago {
+        if metodo_pago_str == "efectivo" || metodo_pago_str == "Efectivo" {
             MetodoPago::Efectivo
-        }else if metodo_pago_str == "mixto" || metodo_pago_str == "Mixto"{
+        } else if metodo_pago_str == "mixto" || metodo_pago_str == "Mixto" {
             MetodoPago::Mixto
-        }else if metodo_pago_str == "tarjeta" || metodo_pago_str == "Tarjeta"{
+        } else if metodo_pago_str == "tarjeta" || metodo_pago_str == "Tarjeta" {
             MetodoPago::Tarjeta
-        }else{
+        } else {
             MetodoPago::Transferencia
         }
     }
-
 }
 
 #[tauri::command]
-pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Option<TipoPedido>, nombre_cliente: Option<String>, fecha_inicio: Option<String>, fecha_fin: Option<String>, total_desde: Option<f64>, total_hasta: Option<f64>, nota: Option<String>, estatus: Option<EstadoPedido>, metodo_pago: Option<MetodoPago>) -> Result<Vec<Pedido>, String>{
+pub fn obtener_ordenes(
+    pagina_frontend: i64,
+    id: Option<u64>,
+    tipo_pedido: Option<TipoPedido>,
+    nombre_cliente: Option<String>,
+    fecha_inicio: Option<String>,
+    fecha_fin: Option<String>,
+    total_desde: Option<f64>,
+    total_hasta: Option<f64>,
+    nota: Option<String>,
+    estatus: Option<EstadoPedido>,
+    metodo_pago: Option<MetodoPago>,
+) -> Result<Vec<Pedido>, String> {
     let conn: Connection = obtener_conexion_db()?;
     let mut pedidos: Vec<Pedido> = Vec::new();
     let mut comando: String = String::from("SELECT id, total, tipo_pedido, nombre_cliente, nota, estatus, fecha_hora_pedido FROM pedidos");
@@ -184,7 +223,8 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
     let mut numero_parametro: i32 = 1;
     let mut vec_campos_where: Vec<String> = vec![];
 
-    if let Some(estatus_some) = estatus{ //EL unico campo que se valida sin importar el ID es el estatus
+    if let Some(estatus_some) = estatus {
+        //EL unico campo que se valida sin importar el ID es el estatus
         let str_some: String = estatus_some.to_string();
         let lower: String = descapitalizar(&str_some);
         let text_param = format!("estatus = ?{}", numero_parametro);
@@ -195,13 +235,15 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
         vec_campos_where.push(text_param);
     }
 
-    if let Some(id_some) = id { //Buscar por ID anula los otros campos
-        let s: String = format!("id = ?{}", numero_parametro); 
+    if let Some(id_some) = id {
+        //Buscar por ID anula los otros campos
+        let s: String = format!("id = ?{}", numero_parametro);
         numero_parametro += 1;
-        parametros.push(Box::new(id_some as i64) as Box<dyn rusqlite::ToSql>); 
+        parametros.push(Box::new(id_some as i64) as Box<dyn rusqlite::ToSql>);
         vec_campos_where.push(s);
-    }else{//Se validan los otros campos
-        if let Some(tipo_pedido_some) = tipo_pedido{
+    } else {
+        //Se validan los otros campos
+        if let Some(tipo_pedido_some) = tipo_pedido {
             let str_some: String = tipo_pedido_some.to_string();
             let lower: String = descapitalizar(&str_some);
             let text_param = format!("tipo_pedido = ?{}", numero_parametro);
@@ -214,7 +256,10 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
         if let Some(metodo_pago_some) = metodo_pago {
             let str_some: String = metodo_pago_some.to_string();
             let lower: String = descapitalizar(&str_some);
-            let text_param: String = format!("id IN (SELECT pedido_id FROM pedidos_pagados WHERE metodo = ?{})",numero_parametro);
+            let text_param: String = format!(
+                "id IN (SELECT pedido_id FROM pedidos_pagados WHERE metodo = ?{})",
+                numero_parametro
+            );
             let caja: Box<String> = Box::new(lower);
             let caja_as: Box<dyn ToSql> = caja as Box<dyn rusqlite::ToSql>;
             parametros.push(caja_as);
@@ -230,7 +275,7 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
             numero_parametro += 1;
             vec_campos_where.push(text_param);
         }
-        if let Some(nota_some) = nota{
+        if let Some(nota_some) = nota {
             let text_param = format!("nota LIKE ?{}", numero_parametro);
             let valor_busqueda = format!("%{}%", &nota_some);
             let caja: Box<String> = Box::new(valor_busqueda);
@@ -239,7 +284,7 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
             numero_parametro += 1;
             vec_campos_where.push(text_param);
         }
-        if let Some(total_desde_some) = total_desde{
+        if let Some(total_desde_some) = total_desde {
             let text_param = format!("total >= ?{}", numero_parametro);
             let caja: Box<f64> = Box::new(total_desde_some);
             let caja_as: Box<dyn ToSql> = caja as Box<dyn rusqlite::ToSql>;
@@ -247,7 +292,7 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
             numero_parametro += 1;
             vec_campos_where.push(text_param);
         }
-        if let Some(total_hasta_some) = total_hasta{
+        if let Some(total_hasta_some) = total_hasta {
             let text_param = format!("total <= ?{}", numero_parametro);
             let caja: Box<f64> = Box::new(total_hasta_some);
             let caja_as: Box<dyn ToSql> = caja as Box<dyn rusqlite::ToSql>;
@@ -282,7 +327,11 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
         format!("WHERE {}", vec_campos_where.join(" AND ")) //AND no se pone al inicio ni al final porque se pone entre elementos
     };
     //Finalmente poner el ORDER BY y el limit y offset
-    let final_string = format!("ORDER BY fecha_hora_pedido DESC LIMIT ?{} OFFSET ?{}", numero_parametro, numero_parametro + 1);
+    let final_string = format!(
+        "ORDER BY fecha_hora_pedido DESC LIMIT ?{} OFFSET ?{}",
+        numero_parametro,
+        numero_parametro + 1
+    );
 
     comando = format!("{} {} {}", comando, where_clause, final_string);
 
@@ -294,24 +343,41 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
     parametros.push(caja_offset_as);
 
     let mut stmt = conn.prepare(&comando).map_err(|e| e.to_string())?;
-    let res_map = stmt.query_map(rusqlite::params_from_iter(parametros), |row|{
-        let identifier_i64: i64 = row.get::<&str, i64>("id")?;
-        let total: f64 = row.get::<&str, f64>("total")?;
-        let tipo_pedido_lower: String = row.get::<&str, String>("tipo_pedido")?;
-        let nombre_cliente: Option<String> = row.get::<&str, Option<String>>("nombre_cliente")?;
-        let nota: Option<String> = row.get::<&str, Option<String>>("nota")?;
-        let estatus_lower: String = row.get::<&str, String>("estatus")?;
-        let fecha_hora_pedido: String = row.get::<&str, String>("fecha_hora_pedido")?;
+    let res_map = stmt
+        .query_map(rusqlite::params_from_iter(parametros), |row| {
+            let identifier_i64: i64 = row.get::<&str, i64>("id")?;
+            let total: f64 = row.get::<&str, f64>("total")?;
+            let tipo_pedido_lower: String = row.get::<&str, String>("tipo_pedido")?;
+            let nombre_cliente: Option<String> =
+                row.get::<&str, Option<String>>("nombre_cliente")?;
+            let nota: Option<String> = row.get::<&str, Option<String>>("nota")?;
+            let estatus_lower: String = row.get::<&str, String>("estatus")?;
+            let fecha_hora_pedido: String = row.get::<&str, String>("fecha_hora_pedido")?;
 
-        let tipo_pedido: String = capitalizar(&tipo_pedido_lower);
-        let estatus: String = capitalizar(&estatus_lower);
-        let enum_info_tipo_pedido: InfoTipoPedido = Pedido::create_new_info_tipo_pedido_by_name(&tipo_pedido);
-        let enum_estado_pedido: EstadoPedido = Pedido::create_new_estado_pedido_by_name(&estatus);
-        let enum_tipo_pedido_enum: TipoPedido = Pedido::create_new_tipo_pedido_by_name(&tipo_pedido);
-        let pedidito = Pedido{id: identifier_i64 as u64, total: total, tipo: enum_tipo_pedido_enum, estado: enum_estado_pedido, nota: nota, nombre_cliente: nombre_cliente, fecha_hora: fecha_hora_pedido, platillos_pedidos: Vec::new(), info_tipo_pedido: enum_info_tipo_pedido, metodo_pago: None};
-        Ok(pedidito)
-    }).map_err(|e: rusqlite::Error| e.to_string())?;
-    
+            let tipo_pedido: String = capitalizar(&tipo_pedido_lower);
+            let estatus: String = capitalizar(&estatus_lower);
+            let enum_info_tipo_pedido: InfoTipoPedido =
+                Pedido::create_new_info_tipo_pedido_by_name(&tipo_pedido);
+            let enum_estado_pedido: EstadoPedido =
+                Pedido::create_new_estado_pedido_by_name(&estatus);
+            let enum_tipo_pedido_enum: TipoPedido =
+                Pedido::create_new_tipo_pedido_by_name(&tipo_pedido);
+            let pedidito = Pedido {
+                id: identifier_i64 as u64,
+                total: total,
+                tipo: enum_tipo_pedido_enum,
+                estado: enum_estado_pedido,
+                nota: nota,
+                nombre_cliente: nombre_cliente,
+                fecha_hora: fecha_hora_pedido,
+                platillos_pedidos: Vec::new(),
+                info_tipo_pedido: enum_info_tipo_pedido,
+                metodo_pago: None,
+            };
+            Ok(pedidito)
+        })
+        .map_err(|e: rusqlite::Error| e.to_string())?;
+
     for result in res_map {
         let Ok(mut obj) = result else {
             continue;
@@ -325,11 +391,21 @@ pub fn obtener_ordenes(pagina_frontend: i64, id: Option<u64>, tipo_pedido: Optio
     }
 
     Ok(pedidos)
-
 }
 
 #[tauri::command]
-pub fn count_ordenes(id: Option<u64>,tipo_pedido: Option<TipoPedido>,nombre_cliente: Option<String>,fecha_inicio: Option<String>,fecha_fin: Option<String>,total_desde: Option<f64>,total_hasta: Option<f64>,nota: Option<String>,estatus: Option<EstadoPedido>, metodo_pago: Option<MetodoPago>) -> Result<i64, String> {
+pub fn count_ordenes(
+    id: Option<u64>,
+    tipo_pedido: Option<TipoPedido>,
+    nombre_cliente: Option<String>,
+    fecha_inicio: Option<String>,
+    fecha_fin: Option<String>,
+    total_desde: Option<f64>,
+    total_hasta: Option<f64>,
+    nota: Option<String>,
+    estatus: Option<EstadoPedido>,
+    metodo_pago: Option<MetodoPago>,
+) -> Result<i64, String> {
     println!("Metodo pago option: {:?}", metodo_pago);
     let conn: Connection = obtener_conexion_db()?;
     let mut comando: String = String::from("SELECT COUNT(*) FROM pedidos");
@@ -364,11 +440,14 @@ pub fn count_ordenes(id: Option<u64>,tipo_pedido: Option<TipoPedido>,nombre_clie
             numero_parametro += 1;
             vec_campos_where.push(text_param);
         }
-        if let Some(metodo_pago_some) = metodo_pago { 
+        if let Some(metodo_pago_some) = metodo_pago {
             let str_some: String = metodo_pago_some.to_string();
             let lower: String = descapitalizar(&str_some);
             print!("Pasó por aquí: {}", metodo_pago_some);
-            let text_param: String = format!("id IN (SELECT pedido_id FROM pedidos_pagados WHERE metodo = ?{})",numero_parametro);
+            let text_param: String = format!(
+                "id IN (SELECT pedido_id FROM pedidos_pagados WHERE metodo = ?{})",
+                numero_parametro
+            );
             let caja: Box<String> = Box::new(lower);
             let caja_as: Box<dyn ToSql> = caja as Box<dyn rusqlite::ToSql>;
             parametros.push(caja_as);
@@ -446,28 +525,39 @@ pub fn count_ordenes(id: Option<u64>,tipo_pedido: Option<TipoPedido>,nombre_clie
     Ok(count)
 }
 
-pub fn obtener_platillos_pedidos_by_pedido_id(pedido_id: u64) -> Result<Vec<PedidoPlatillo>, String> {
+pub fn obtener_platillos_pedidos_by_pedido_id(
+    pedido_id: u64,
+) -> Result<Vec<PedidoPlatillo>, String> {
     let conn: Connection = obtener_conexion_db()?;
     let mut platillos: Vec<PedidoPlatillo> = Vec::new();
     let comando: &str = "SELECT id, name, precio, platillo_id, category_id FROM platillos_pedidos WHERE pedido_id = ?";
     let parametros = rusqlite::params![pedido_id as i64];
 
     let mut stmt = conn.prepare(comando).map_err(|e| e.to_string())?;
-    let res_map = stmt.query_map(parametros, |row|{
-        let identifier_i64: i64 = row.get::<&str, i64>("id")?;
-        let name: String = row.get::<&str, String>("name")?;
-        let precio: f64 = row.get::<&str, f64>("precio")?;
-        let platillo_id: i64 = row.get::<&str, i64>("platillo_id")?;
-        let category_id: Option<i64> = row.get::<&str, Option<i64>>("category_id")?;
+    let res_map = stmt
+        .query_map(parametros, |row| {
+            let identifier_i64: i64 = row.get::<&str, i64>("id")?;
+            let name: String = row.get::<&str, String>("name")?;
+            let precio: f64 = row.get::<&str, f64>("precio")?;
+            let platillo_id: i64 = row.get::<&str, i64>("platillo_id")?;
+            let category_id: Option<i64> = row.get::<&str, Option<i64>>("category_id")?;
 
-        let definitive_category_id: u64 = category_id.unwrap_or(0) as u64;
+            let definitive_category_id: u64 = category_id.unwrap_or(0) as u64;
 
-        let platillo_pedido = PedidoPlatillo{id: identifier_i64 as u64, name: name, precio: precio, platillo_id: platillo_id as u64, categoria_id: definitive_category_id, pedido_id: pedido_id, platillo: None};
-        Ok(platillo_pedido)
+            let platillo_pedido = PedidoPlatillo {
+                id: identifier_i64 as u64,
+                name: name,
+                precio: precio,
+                platillo_id: platillo_id as u64,
+                categoria_id: definitive_category_id,
+                pedido_id: pedido_id,
+                platillo: None,
+            };
+            Ok(platillo_pedido)
+        })
+        .map_err(|e| e.to_string())?;
 
-    }).map_err(|e|e.to_string())?;
-
-    for result in res_map{
+    for result in res_map {
         let Ok(mut obj) = result else {
             continue;
         };
@@ -479,49 +569,75 @@ pub fn obtener_platillos_pedidos_by_pedido_id(pedido_id: u64) -> Result<Vec<Pedi
     Ok(platillos)
 }
 
-fn obetener_info_tipo_pedido_by_pedido_id(pedido_id: u64, tipo_pedido: &TipoPedido) -> Result<InfoTipoPedido, String>{
+fn obetener_info_tipo_pedido_by_pedido_id(
+    pedido_id: u64,
+    tipo_pedido: &TipoPedido,
+) -> Result<InfoTipoPedido, String> {
     let conn: Connection = obtener_conexion_db()?;
     let params = rusqlite::params![pedido_id as i64];
     let enum_info: Result<InfoTipoPedido, String> = match tipo_pedido {
-        TipoPedido::Local=>{
-            let comando: &str = "SELECT id, piso, mesa, mesero FROM pedidos_local WHERE pedido_id = ?";
-            let res: Result<PedidoLocal, rusqlite::Error> = conn.query_row(comando, params, |row|{
-                let identifier_i64: i64 = row.get::<&str, i64>("id")?;
-                let piso: i64 = row.get::<&str, i64>("piso")?;
-                let mesa: i64 = row.get::<&str, i64>("mesa")?;
-                let mesero: String = row.get::<&str, String>("mesero")?;
-                let pedido_local = PedidoLocal{id: identifier_i64 as u64, piso: piso, mesa: mesa as u64, mesero: mesero, pedido_id: pedido_id};
-                Ok(pedido_local)
-            });
+        TipoPedido::Local => {
+            let comando: &str =
+                "SELECT id, piso, mesa, mesero FROM pedidos_local WHERE pedido_id = ?";
+            let res: Result<PedidoLocal, rusqlite::Error> =
+                conn.query_row(comando, params, |row| {
+                    let identifier_i64: i64 = row.get::<&str, i64>("id")?;
+                    let piso: i64 = row.get::<&str, i64>("piso")?;
+                    let mesa: i64 = row.get::<&str, i64>("mesa")?;
+                    let mesero: String = row.get::<&str, String>("mesero")?;
+                    let pedido_local = PedidoLocal {
+                        id: identifier_i64 as u64,
+                        piso: piso,
+                        mesa: mesa as u64,
+                        mesero: mesero,
+                        pedido_id: pedido_id,
+                    };
+                    Ok(pedido_local)
+                });
             match res {
                 Ok(pedido_local) => Ok(InfoTipoPedido::PedidoLocal(pedido_local)),
                 Err(e) => Err(e.to_string()),
             }
         }
-        TipoPedido::Domicilio=>{
+        TipoPedido::Domicilio => {
             let comando: &str = "SELECT id, calle, numero_interior_exterior, colonia, telefono, repartidor FROM pedidos_domicilio WHERE pedido_id = ?";
-            let res: Result<PedidoDomicilio, rusqlite::Error> = conn.query_row(comando, params, |row|{
-                let identifier_i64: i64 = row.get::<&str, i64>("id")?;
-                let calle: Option<String> = row.get::<&str, Option<String>>("calle")?;
-                let numero_interior_exterior: Option<i64> = row.get::<&str, Option<i64>>("numero_interior_exterior")?;
-                let colonia: Option<String> = row.get::<&str, Option<String>>("colonia")?;
-                let telefono: Option<String> = row.get::<&str, Option<String>>("telefono")?;
-                let repartidor: Option<String> = row.get::<&str, Option<String>>("repartidor")?;
-                let pedido_domicilio = PedidoDomicilio{pedido_id: pedido_id, id: identifier_i64 as u64, calle, numero_interior_exterior, colonia, telefono, repartidor};
-                Ok(pedido_domicilio)
-            });
+            let res: Result<PedidoDomicilio, rusqlite::Error> =
+                conn.query_row(comando, params, |row| {
+                    let identifier_i64: i64 = row.get::<&str, i64>("id")?;
+                    let calle: Option<String> = row.get::<&str, Option<String>>("calle")?;
+                    let numero_interior_exterior: Option<i64> =
+                        row.get::<&str, Option<i64>>("numero_interior_exterior")?;
+                    let colonia: Option<String> = row.get::<&str, Option<String>>("colonia")?;
+                    let telefono: Option<String> = row.get::<&str, Option<String>>("telefono")?;
+                    let repartidor: Option<String> =
+                        row.get::<&str, Option<String>>("repartidor")?;
+                    let pedido_domicilio = PedidoDomicilio {
+                        pedido_id: pedido_id,
+                        id: identifier_i64 as u64,
+                        calle,
+                        numero_interior_exterior,
+                        colonia,
+                        telefono,
+                        repartidor,
+                    };
+                    Ok(pedido_domicilio)
+                });
             match res {
                 Ok(pedido_domicilio) => Ok(InfoTipoPedido::PedidoDomicilio(pedido_domicilio)),
                 Err(e) => Err(e.to_string()),
             }
         }
-        TipoPedido::Recoger=>{
-            let comando : &str = "SELECT id FROM pedidos_recoger WHERE pedido_id = ?";
-            let res: Result<PedidoRecoger, rusqlite::Error> = conn.query_row(comando, params, |row|{
-                let identifier_i64: i64 = row.get::<&str, i64>("id")?;
-                let pedido_recoger = PedidoRecoger{id: identifier_i64 as u64, pedido_id: pedido_id};
-                Ok(pedido_recoger)
-            });
+        TipoPedido::Recoger => {
+            let comando: &str = "SELECT id FROM pedidos_recoger WHERE pedido_id = ?";
+            let res: Result<PedidoRecoger, rusqlite::Error> =
+                conn.query_row(comando, params, |row| {
+                    let identifier_i64: i64 = row.get::<&str, i64>("id")?;
+                    let pedido_recoger = PedidoRecoger {
+                        id: identifier_i64 as u64,
+                        pedido_id: pedido_id,
+                    };
+                    Ok(pedido_recoger)
+                });
             match res {
                 Ok(pedido_recoger) => Ok(InfoTipoPedido::PedidoRecoger(pedido_recoger)),
                 Err(e) => Err(e.to_string()),
@@ -532,31 +648,35 @@ fn obetener_info_tipo_pedido_by_pedido_id(pedido_id: u64, tipo_pedido: &TipoPedi
     Ok(info)
 }
 
-fn obtener_metodo_pago_by_pedido_id(pedido_id: u64)->Result<Option<MetodoPago>, String>{
+fn obtener_metodo_pago_by_pedido_id(pedido_id: u64) -> Result<Option<MetodoPago>, String> {
     let conn: Connection = obtener_conexion_db()?;
     let params = rusqlite::params![pedido_id as i64];
     let comando: &str = "SELECT metodo FROM pedidos_pagados WHERE pedido_id = ?1;";
 
-    let resultado_query: Result<String, rusqlite::Error> = conn.query_row(comando, params, |row|{
+    let resultado_query: Result<String, rusqlite::Error> = conn.query_row(comando, params, |row| {
         let metodo_pago_lower: String = row.get::<&str, String>("metodo")?;
         Ok(metodo_pago_lower)
     });
 
-    let opcional_res: Result<Option<String>, rusqlite::Error> = resultado_query.optional();//Si no encontró ninguna lo hacemos option
-    let res_select: Option<String> = opcional_res.map_err(|e| e.to_string())?;//Desempaquetamos el Result para que nos de el option
-    let metodo_option: Option<MetodoPago> = match res_select{
-        Some(metodo_str_lower)=>{
+    let opcional_res: Result<Option<String>, rusqlite::Error> = resultado_query.optional(); //Si no encontró ninguna lo hacemos option
+    let res_select: Option<String> = opcional_res.map_err(|e| e.to_string())?; //Desempaquetamos el Result para que nos de el option
+    let metodo_option: Option<MetodoPago> = match res_select {
+        Some(metodo_str_lower) => {
             let metodo_upper: String = capitalizar(&metodo_str_lower);
             let metodo_some: MetodoPago = Pedido::create_new_metodo_pago_by_name(&metodo_upper);
             Some(metodo_some)
         }
-        None => None
+        None => None,
     };
     Ok(metodo_option)
 }
 
 #[tauri::command]
-pub fn guardar_pedido_compartido(clave: String, valor: Pedido, pedido: State<'_, PedidoCompartido>) -> Result<(), String> {
+pub fn guardar_pedido_compartido(
+    clave: String,
+    valor: Pedido,
+    pedido: State<'_, PedidoCompartido>,
+) -> Result<(), String> {
     let resultado_lock = pedido.0.lock();
     let mut mapa = resultado_lock.map_err(|e| e.to_string())?;
     mapa.insert(clave, valor);
@@ -564,7 +684,10 @@ pub fn guardar_pedido_compartido(clave: String, valor: Pedido, pedido: State<'_,
 }
 
 #[tauri::command]
-pub fn obtener_pedido_compartido(clave: String, pedido: State<'_, PedidoCompartido>,) -> Result<Option<Pedido>, String> {
+pub fn obtener_pedido_compartido(
+    clave: String,
+    pedido: State<'_, PedidoCompartido>,
+) -> Result<Option<Pedido>, String> {
     let resultado_lock = pedido.0.lock();
     let mapa = resultado_lock.map_err(|e| e.to_string())?;
     let valor: Option<&Pedido> = mapa.get(&clave);

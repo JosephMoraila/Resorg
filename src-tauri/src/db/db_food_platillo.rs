@@ -14,7 +14,7 @@ pub struct Platillo {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum Tipo{
+pub enum Tipo {
     #[serde(rename = "categoria")]
     Categoria,
     #[serde(rename = "platillo")]
@@ -22,10 +22,20 @@ pub enum Tipo{
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub fn insert_platillo(nombre: String, descripcion: Option<String>, precio: f64, id_categoria: Option<u64>, image_bytes: Option<Vec<u8>>) -> Result<u64, String> {
+pub fn insert_platillo(
+    nombre: String,
+    descripcion: Option<String>,
+    precio: f64,
+    id_categoria: Option<u64>,
+    image_bytes: Option<Vec<u8>>,
+) -> Result<u64, String> {
     let conn: Connection = obtener_conexion_db()?;
     let comando: &str = "INSERT INTO food_platillos (name, descripcion, precio, category_id) VALUES (?1, ?2, ?3, ?4)";
-    conn.execute(comando, (nombre, descripcion, precio, id_categoria.map(|v| v as i64))).map_err(|e: rusqlite::Error| e.to_string())?;
+    conn.execute(
+        comando,
+        (nombre, descripcion, precio, id_categoria.map(|v| v as i64)),
+    )
+    .map_err(|e: rusqlite::Error| e.to_string())?;
     let last_id = conn.last_insert_rowid();
 
     if let Some(image_data) = image_bytes {
@@ -38,10 +48,18 @@ pub fn insert_platillo(nombre: String, descripcion: Option<String>, precio: f64,
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub fn update_platillo(id: u64,nombre: String,descripcion: Option<String>,precio: f64,image_bytes: Option<Vec<u8>>,) -> Result<(), String> {
+pub fn update_platillo(
+    id: u64,
+    nombre: String,
+    descripcion: Option<String>,
+    precio: f64,
+    image_bytes: Option<Vec<u8>>,
+) -> Result<(), String> {
     let conn: Connection = obtener_conexion_db()?;
-    let comando: &str = "UPDATE food_platillos SET name = ?1, descripcion = ?2, precio = ?3 WHERE id = ?4";
-    conn.execute(comando, (nombre, descripcion, precio, id as i64)).map_err(|e: rusqlite::Error| e.to_string())?;
+    let comando: &str =
+        "UPDATE food_platillos SET name = ?1, descripcion = ?2, precio = ?3 WHERE id = ?4";
+    conn.execute(comando, (nombre, descripcion, precio, id as i64))
+        .map_err(|e: rusqlite::Error| e.to_string())?;
 
     let image_folder: std::path::PathBuf = obtener_carpeta_imagen_platillos()?;
     let image_path: std::path::PathBuf = image_folder.join(format!("platillo_{}.png", id));
@@ -66,7 +84,8 @@ pub fn update_platillo(id: u64,nombre: String,descripcion: Option<String>,precio
 pub fn delete_platillo(id: u64) -> Result<(), String> {
     let conn: Connection = obtener_conexion_db()?;
     let comando: &str = "DELETE FROM food_platillos WHERE id = ?1";
-    conn.execute(comando, (id as i64,)).map_err(|e: rusqlite::Error| e.to_string())?;
+    conn.execute(comando, (id as i64,))
+        .map_err(|e: rusqlite::Error| e.to_string())?;
 
     let image_folder: std::path::PathBuf = obtener_carpeta_imagen_platillos()?;
     let image_path: std::path::PathBuf = image_folder.join(format!("platillo_{}.png", id));
@@ -119,18 +138,26 @@ pub fn get_platillos_by_category_id(category_id: Option<u64>) -> Result<Vec<Plat
     Ok(comidas)
 }
 
-pub fn get_platillo_by_id(platillo_id: u64)->Result<Option<Platillo>, String>{
+pub fn get_platillo_by_id(platillo_id: u64) -> Result<Option<Platillo>, String> {
     let conn: Connection = obtener_conexion_db()?;
-    let comando: &str  = "SELECT name, descripcion, precio, category_id FROM food_platillos WHERE id = ?1";
+    let comando: &str =
+        "SELECT name, descripcion, precio, category_id FROM food_platillos WHERE id = ?1";
     let params = rusqlite::params![platillo_id as i64];
 
-    let res: Result<Platillo, rusqlite::Error> = conn.query_row(comando, params, |row|{
+    let res: Result<Platillo, rusqlite::Error> = conn.query_row(comando, params, |row| {
         let nombre: String = row.get::<&str, String>("name")?;
         let descripcion: Option<String> = row.get::<&str, Option<String>>("descripcion")?;
         let precio: f64 = row.get::<&str, f64>("precio")?;
         let category_id: Option<i64> = row.get("category_id")?; //Option, porque puede ser NULL
         let cat: u64 = category_id.map(|v| v as u64).unwrap_or(0); //Si la categoria es NULL guardarla como 0
-        let p = Platillo{id: platillo_id, descripcion: descripcion, id_categoria: cat, nombre, precio, tipo: Tipo::Platillo};
+        let p = Platillo {
+            id: platillo_id,
+            descripcion: descripcion,
+            id_categoria: cat,
+            nombre,
+            precio,
+            tipo: Tipo::Platillo,
+        };
         Ok(p)
     });
     let opt_res: Result<Option<Platillo>, rusqlite::Error> = res.optional(); //Si no se encontró hacerlo option

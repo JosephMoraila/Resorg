@@ -1,4 +1,4 @@
-use base64::{engine::general_purpose};
+use base64::engine::general_purpose;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use std::fs;
@@ -34,15 +34,14 @@ pub fn conversion_segura(ruta: &PathBuf) -> Result<String, String> {
             let mi_string: String = ruta_texto.to_string();
             Ok(mi_string)
         }
-        None => {
-            Err("Error: La ruta contiene caracteres inválidos y no se puede leer".to_string())
-        }
+        None => Err("Error: La ruta contiene caracteres inválidos y no se puede leer".to_string()),
     }
 }
 
 /// Lee una imagen física del disco y devuelve su representación en Base64.
 pub fn imagen_a_base64(ruta: &str) -> Result<String, String> {
-    let bytes: Vec<u8> = fs::read(ruta).map_err(|e| format!("Error al leer el archivo de imagen: {}", e))?;
+    let bytes: Vec<u8> =
+        fs::read(ruta).map_err(|e| format!("Error al leer el archivo de imagen: {}", e))?;
 
     let base64_string: String = STANDARD.encode(&bytes);
 
@@ -57,6 +56,8 @@ pub fn base64_to_bytes(src: &str) -> Result<Vec<u8>, String> {
         src
     };
 
-    let bytes_image: Vec<u8> = general_purpose::STANDARD.decode(src_clean).map_err(|e| e.to_string())?;
+    let bytes_image: Vec<u8> = general_purpose::STANDARD
+        .decode(src_clean)
+        .map_err(|e| e.to_string())?;
     Ok(bytes_image)
 }

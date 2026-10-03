@@ -12,7 +12,7 @@ pub struct Mesero {
 pub fn insert_mesero(nombre: String) -> Result<u64, String> {
     let conn: Connection = obtener_conexion_db()?;
     let comando: &str = "INSERT INTO meseros (nombre) VALUES (?1);";
-    conn.execute(comando, rusqlite::params![nombre]) 
+    conn.execute(comando, rusqlite::params![nombre])
         .map_err(|e: rusqlite::Error| e.to_string())?;
     let last_id: i64 = conn.last_insert_rowid();
     Ok(last_id as u64)
@@ -22,7 +22,9 @@ pub fn insert_mesero(nombre: String) -> Result<u64, String> {
 pub fn get_meseros() -> Result<Vec<Mesero>, String> {
     let conn: Connection = obtener_conexion_db()?;
     let comando: &str = "SELECT id, nombre FROM meseros";
-    let mut stmt = conn.prepare(comando).map_err(|e: rusqlite::Error| e.to_string())?;
+    let mut stmt = conn
+        .prepare(comando)
+        .map_err(|e: rusqlite::Error| e.to_string())?;
     let iteraciones = stmt
         .query_map([], |row| {
             let ide: i64 = row.get::<&str, i64>("id")?;
@@ -35,16 +37,17 @@ pub fn get_meseros() -> Result<Vec<Mesero>, String> {
         })
         .map_err(|e: rusqlite::Error| e.to_string())?;
 
-    let filtro = iteraciones.filter_map(|res: Result<Mesero, rusqlite::Error>| res.ok()); 
+    let filtro = iteraciones.filter_map(|res: Result<Mesero, rusqlite::Error>| res.ok());
     let meseros: Vec<Mesero> = filtro.collect();
     Ok(meseros)
 }
 
 #[tauri::command]
-pub fn delete_mesero(id: i64)->Result<(), String>{
+pub fn delete_mesero(id: i64) -> Result<(), String> {
     let conn: Connection = obtener_conexion_db()?;
     let comando: &str = "DELETE FROM meseros WHERE id = ?1;";
-    conn.execute(comando, rusqlite::params![id]).map_err(|e: rusqlite::Error| e.to_string())?;
+    conn.execute(comando, rusqlite::params![id])
+        .map_err(|e: rusqlite::Error| e.to_string())?;
 
     Ok(())
 }

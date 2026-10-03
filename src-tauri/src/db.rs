@@ -29,10 +29,10 @@ use std::path::PathBuf;
 
 pub const PAGINACION_50_TAMANO: i8 = 50;
 
-/// Calcula el desplazamiento (`OFFSET`) para la paginación de SQLite 
-/// basándose en el número de página actual (que inicia en 1) y 
+/// Calcula el desplazamiento (`OFFSET`) para la paginación de SQLite
+/// basándose en el número de página actual (que inicia en 1) y
 /// un tamaño de página fijo de 50 elementos.
-/// 
+///
 /// Si se recibe un número de página menor o igual a 0, retorna 0 por seguridad.
 /// # Parameters
 /// - `pagina`: Número de página actual (1-indexed).
@@ -42,7 +42,7 @@ pub fn calcular_offset(pagina: i64) -> i64 {
     if pagina <= 0 {
         return 0;
     }
-    
+
     (pagina - 1) * (PAGINACION_50_TAMANO as i64)
 }
 
@@ -140,17 +140,21 @@ pub fn inicializar_tablas() -> Result<(), String> {
 
     ";
 
-    conn.execute_batch(comando).map_err(|e: rusqlite::Error| e.to_string())?;
+    conn.execute_batch(comando)
+        .map_err(|e: rusqlite::Error| e.to_string())?;
 
     let comando_count_pisos: &str = "SELECT COUNT(*) FROM edificio";
-    let count_edificio: i32= conn.query_row(comando_count_pisos, [], |row| {
-        let count: i32 = row.get(0)?;
-        Ok(count)
-    }).map_err(|e: rusqlite::Error| e.to_string())?;
+    let count_edificio: i32 = conn
+        .query_row(comando_count_pisos, [], |row| {
+            let count: i32 = row.get(0)?;
+            Ok(count)
+        })
+        .map_err(|e: rusqlite::Error| e.to_string())?;
 
     if count_edificio == 0 {
         let comando_insert: &str = "INSERT INTO edificio (piso, mesas) VALUES (1, 1)";
-        conn.execute(comando_insert, []).map_err(|e: rusqlite::Error| e.to_string())?;
+        conn.execute(comando_insert, [])
+            .map_err(|e: rusqlite::Error| e.to_string())?;
     }
 
     Ok(())

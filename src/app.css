@@ -4,6 +4,11 @@
 }
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*controlar el modo oscuro con una clase "dark" en la etiqueta <html>: */
+html.dark {
+  color-scheme: dark;
+}
+
 .btn-realista {
   @apply border border-gray-400 dark:border-gray-600 rounded-lg px-5 py-2.5 cursor-pointer
     bg-radial from-gray-100 via-gray-200 to-gray-300

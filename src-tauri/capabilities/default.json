@@ -17,6 +17,7 @@
     "core:window:allow-show",
     "core:window:allow-set-focus",
     "fs:default",
+    "autostart:default",
     {
       "identifier": "fs:allow-read-file",
       "allow": [{ "path": "**" }]

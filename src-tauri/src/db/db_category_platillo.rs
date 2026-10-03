@@ -41,7 +41,8 @@ pub fn update_category_platillo(id: u64, name: String) -> Result<(), String> {
     let comando: &str = "UPDATE categories_platillos SET name = ?1 WHERE id = ?2;";
     let parametros: &[&dyn rusqlite::ToSql] = rusqlite::params![name, id as i64];
 
-    conn.execute(comando, parametros).map_err(|e: rusqlite::Error| e.to_string())?;
+    conn.execute(comando, parametros)
+        .map_err(|e: rusqlite::Error| e.to_string())?;
 
     Ok(())
 }
@@ -52,7 +53,8 @@ pub fn delete_category_platillo(id: u64) -> Result<(), String> {
     let comando: &str = "DELETE FROM categories_platillos WHERE id = ?1;";
     let parametros: &[&dyn rusqlite::ToSql] = rusqlite::params![id as i64];
 
-    conn.execute(comando, parametros).map_err(|e: rusqlite::Error| e.to_string())?;
+    conn.execute(comando, parametros)
+        .map_err(|e: rusqlite::Error| e.to_string())?;
 
     Ok(())
 }
@@ -67,7 +69,7 @@ pub struct PlatilloCategoria {
 
 #[tauri::command]
 pub fn get_categories_platillo() -> Result<Vec<PlatilloCategoria>, String> {
-    let padre = PlatilloCategoria{
+    let padre = PlatilloCategoria {
         id: 0,
         tipo: Tipo::Categoria,
         nombre: "Platillos".to_string(),

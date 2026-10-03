@@ -1,4 +1,3 @@
-
 ///Hace mayúscula la primera letra de un string
 /// # Parameters
 /// - `s`: El string que se desea capitalizar.
