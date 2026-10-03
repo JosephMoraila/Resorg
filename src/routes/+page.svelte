@@ -6,7 +6,7 @@
   function onRegistrarOrden(){
     const value = `registrar-orden-${crypto.randomUUID()}`;
     const objRegisterOrden = {title: "Registrar orden", url: "/registrar-orden", height: 800, width: 500,};
-    new WebviewWindow(value, {...objRegisterOrden, center: true, visible: true});
+    new WebviewWindow(value, {...objRegisterOrden, center: true, visible: false});
     const paramEnfocarVentana = {label: value};
     invoke("enfocar_ventana", paramEnfocarVentana);
   }
@@ -14,7 +14,7 @@
   function onVerOrdenesPendientes(){
     const value = `ver-ordenes-pendientes-${crypto.randomUUID()}`;
     const objVerOrdenesPendientes = {title: "Ver ordenes pendientes", url: "/ver-ordenes-pendientes", height: 800, width: 1200,};
-    new WebviewWindow(value, {...objVerOrdenesPendientes, center: true, visible: true});
+    new WebviewWindow(value, {...objVerOrdenesPendientes, center: true, visible: false});
     const paramEnfocarVentana = {label: value};
     invoke("enfocar_ventana", paramEnfocarVentana);
   }
@@ -22,7 +22,7 @@
   function onVerTodasOrdenes(){
     const value = `ver-ordenes-general-${crypto.randomUUID()}`;
     const objVerOrdenesGeneral = {title: "Ver ordenes general", url: "/ver-ordenes-general", height: 800, width: 1200,};
-    new WebviewWindow(value, {...objVerOrdenesGeneral, center: true, visible: true});
+    new WebviewWindow(value, {...objVerOrdenesGeneral, center: true, visible: false});
     const paramEnfocarVentana = {label: value};
     invoke("enfocar_ventana", paramEnfocarVentana);
   }

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { toast } from '$lib/toast.svelte';
+    import { WebviewWindow, getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
     import { invoke } from '@tauri-apps/api/core';
     import { getCurrentWindow } from '@tauri-apps/api/window';
     import { onMount } from 'svelte';
@@ -30,6 +32,7 @@
     let generalTipoPedidoPie = $state<GeneralTipoPedidoPie>({tipoDomicilio: 0, tipoLocal: 0, tipoRecoger: 0});
     let generalEstadoPedidoPie = $state<GeneralEstadoPedidoPie>({pendiente: 0, finalizado: 0, cancelado: 0, entregado: 0, cobrado: 0});
     let generalPlatillosPie = $state<GeneralPlatillosPie[]>([]);
+    
 
     async function obtenerDatosGraficaPedidos(clave: string): Promise<[FiltrosVerOrdenesProps, Pedido[]] | null>{
         const params = {clave};
@@ -37,6 +40,16 @@
         return resultado;
     }
 
+    async function onMostrarVentanaAlMontarse() {
+        try{
+            const label = getCurrentWebviewWindow().label;
+            const ventana = await WebviewWindow.getByLabel(label);
+            await ventana?.show();
+        }catch(err){
+            const error = err as string;
+            toast.rojo(`Error al mostrar ventana: ${error}`);
+        }
+    }
     onMount(()=>{
         const ventanaActual = getCurrentWindow();
         const label = ventanaActual.label;
@@ -59,6 +72,7 @@
             generalPlatillosPie = getGeneralPlatillosPie(pedidos);
         };
         getData();
+        onMostrarVentanaAlMontarse();
     });
 
     function getFiltrosString(){

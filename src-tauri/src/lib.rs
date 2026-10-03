@@ -1,6 +1,7 @@
 use std::sync::{Mutex, OnceLock};
 use tauri::AppHandle;
 use std::collections::HashMap;
+use tauri::Manager;
 
 mod window;
 use crate::window::enfocar_ventana;
@@ -37,6 +38,20 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        //Registramos el plugin de Single Instance
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            // 2. Este bloque se ejecuta cuando alguien intenta abrir una 2da instancia.
+            
+            // Buscamos tu ventana principal (por defecto se llama "main")
+            if let Some(window) = app.get_webview_window("main") {
+                // Hacemos visible la ventana si estaba oculta
+                let _ = window.show();
+                // La restauramos si estaba minimizada en la barra de tareas
+                let _ = window.unminimize();
+                // La traemos al frente
+                let _ = window.set_focus();
+            }
+        }))
         .invoke_handler(tauri::generate_handler![
             enfocar_ventana,
             insert_category_platillo,

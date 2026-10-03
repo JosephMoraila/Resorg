@@ -9,6 +9,7 @@
     import { listen } from "@tauri-apps/api/event";
     import Filtros from "./Filtros.svelte";
     import BotonesVerMas from "./BotonesVerMas.svelte";
+    import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
     let paginaActual = $state(1);  
     let filters: FiltrosVerOrdenesProps = $state({id: null, estatus: "Pendiente", fechaFin: null, fechaInicio: null, nombreCliente: null, nota: null, tipoPedido: null, totalDesde: null, totalHasta: null, metodoPago: null});
@@ -51,14 +52,27 @@
         }
     }
 
+    async function onMostrarVentanaAlMontarse() {
+        try{
+            const label = getCurrentWebviewWindow().label;
+            const ventana = await WebviewWindow.getByLabel(label);
+            await ventana?.show();
+        }catch(err){
+            const error = err as string;
+            toast.rojo(`Error al mostrar ventana: ${error}`);
+        }
+    }
+
     onMount(() => {
         obtenerPedidosPendientes();
         obtenerCountPedidosPendientes();
+        onMostrarVentanaAlMontarse();
 
         const unlisten = listen("pedido-creado", () => {
             obtenerPedidosPendientes();
             obtenerCountPedidosPendientes();
         });
+        
 
         return () => {
             unlisten.then((fna) => fna());

@@ -8,6 +8,7 @@
     import { toast } from "$lib/toast.svelte";
     import { listen } from "@tauri-apps/api/event";
     import { onMount } from "svelte";
+    import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
     let paginaActual = $state(1);  
     let pedidos: Pedido[] = $state([]);
@@ -48,9 +49,21 @@
         }
     }
 
+    async function onMostrarVentanaAlMontarse() {
+        try{
+            const label = getCurrentWebviewWindow().label;
+            const ventana = await WebviewWindow.getByLabel(label);
+            await ventana?.show();
+        }catch(err){
+            const error = err as string;
+            toast.rojo(`Error al mostrar ventana: ${error}`);
+        }
+    }
+
     onMount(() => {
         obtenerPedidos();
         obtenerCountPedidos();
+        onMostrarVentanaAlMontarse();
 
         const unlisten = listen("pedido-creado", () => {
             obtenerPedidos();

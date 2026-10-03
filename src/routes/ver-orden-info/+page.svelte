@@ -9,7 +9,8 @@
     import { toast } from "$lib/toast.svelte";
     import { emit } from "@tauri-apps/api/event";
     import ModalCambiarPlatillosOrden from "$lib/components/modals/ModalCambiarPlatillosOrden.svelte";
-    
+    import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
+
     let pedido = $state<Pedido | null>(null);
     let selectedId: number | null = $state<number | null>(null);
 
@@ -22,6 +23,17 @@
         return resultado;
     }
 
+    async function onMostrarVentanaAlMontarse() {
+        try{
+            const label = getCurrentWebviewWindow().label;
+            const ventana = await WebviewWindow.getByLabel(label);
+            await ventana?.show();
+        }catch(err){
+            const error = err as string;
+            toast.rojo(`Error al mostrar ventana: ${error}`);
+        }
+    }
+
     onMount(()=>{
         const ventanaActual = getCurrentWindow();
         const label = ventanaActual.label;
@@ -31,6 +43,7 @@
             pedido = res;
         };
         getData();
+        onMostrarVentanaAlMontarse();
     });
 
     function onAbrirModalChangeInfo(){

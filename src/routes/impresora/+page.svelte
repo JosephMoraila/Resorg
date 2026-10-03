@@ -2,13 +2,25 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { toast } from "$lib/toast.svelte";
+  import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
   let impresoras = $state<string[]>([]);
   let impresoraSeleccionada = $state("");
   let imprimirAlCrearOrden: boolean = $state(false);
   let imprimirAlCobrar: boolean = $state(false);
 
-  onMount(() => {
+  async function onMostrarVentanaAlMontarse() {
+    try{
+        const label = getCurrentWebviewWindow().label;
+        const ventana = await WebviewWindow.getByLabel(label);
+        await ventana?.show();
+    }catch(err){
+        const error = err as string;
+        toast.rojo(`Error al mostrar ventana: ${error}`);
+    }
+  }
+
+  onMount(async() => {
     const getPrinters = async () => {
       const impresorasBackend = await invoke<string[]>("obtener_impresoras");
       impresoras = impresorasBackend;
@@ -20,7 +32,13 @@
       imprimirAlCobrar = isImprimirAlCobrar;
     };
     getPrinters();
-    loadData();
+    try{
+      loadData();
+    }catch(error){
+      const err = error as string;
+      toast.rojo(`Error al obtener datos: ${err}`);
+    }
+    onMostrarVentanaAlMontarse();
   });
 
   async function guardarConfiguracion() {

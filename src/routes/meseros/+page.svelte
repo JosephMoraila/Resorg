@@ -4,9 +4,21 @@
     import { toast } from "$lib/toast.svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { onMount } from "svelte";
+    import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
     let meseros = $state<Mesero[]>([]);
     let newMesero = $state("");
     let selectedMesero = $state<number | null>(null);
+
+    async function onMostrarVentanaAlMontarse() {
+        try{
+            const label = getCurrentWebviewWindow().label;
+            const ventana = await WebviewWindow.getByLabel(label);
+            await ventana?.show();
+        }catch(err){
+            const error = err as string;
+            toast.rojo(`Error al mostrar ventana: ${error}`);
+        }
+    }
 
     onMount(()=>{
         const getData = async()=>{
@@ -19,6 +31,7 @@
             }
         };
         getData();
+        onMostrarVentanaAlMontarse();
     });
 
     async function addMesero() {

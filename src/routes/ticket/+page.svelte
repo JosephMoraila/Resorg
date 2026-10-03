@@ -8,6 +8,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import { prepararStringHtmlParaExportar } from "$lib/utils/escpos_utils";
     import { onMount } from "svelte";
+    import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
     let elementsCanvas: CanvasElement[] = $state([]);
     let idElement = $state(1);
@@ -272,6 +273,17 @@
         }
     }
 
+  async function onMostrarVentanaAlMontarse() {
+        try{
+            const label = getCurrentWebviewWindow().label;
+            const ventana = await WebviewWindow.getByLabel(label);
+            await ventana?.show();
+        }catch(err){
+            const error = err as string;
+            toast.rojo(`Error al mostrar ventana: ${error}`);
+        }
+    }
+
     onMount(async ()=>{
         try{
             const [anchoBackend, altoBackend, isCanvasBackend] = await invoke<[number, number, boolean]>("get_ticket_measurement");
@@ -281,6 +293,8 @@
         }catch(error){
             const err = error as string;
             toast.rojo(`Error cargando información del ticket: ${err}`);
+        }finally {
+            await onMostrarVentanaAlMontarse();
         }
 
         try{

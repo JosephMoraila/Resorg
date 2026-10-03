@@ -8,6 +8,7 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import ModalAccept from "$lib/components/modals/ModalAccept.svelte";
+  import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
   let modalValuePiso = $state("");
   let isModalAbiertoPiso = $state(false);
@@ -25,6 +26,17 @@
   }
 
   let raices: NodoArbol<Piso>[] = $state([]);
+
+  async function onMostrarVentanaAlMontarse() {
+    try{
+        const label = getCurrentWebviewWindow().label;
+        const ventana = await WebviewWindow.getByLabel(label);
+        await ventana?.show();
+    }catch(err){
+        const error = err as string;
+        toast.rojo(`Error al mostrar ventana: ${error}`);
+    }
+  }
 
   onMount(()=>{
     const getData = async()=>{
@@ -44,6 +56,7 @@
       }
     }
     getData();
+    onMostrarVentanaAlMontarse();
   });
 
   function abrirModalCrearPiso(){

@@ -5,6 +5,7 @@
   import type { TipoPedido, Platillo, PlatilloCategoria, Mesero, PlatilloPedido, FilaPlatillo } from "$lib/types";
   import { sanitizarInputTelefono } from "$lib/utils/string_utils";
   import { toast } from "$lib/toast.svelte";
+  import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
   let tipoPedido = $state<TipoPedido>("Local");
   let telefono = $state("");
@@ -61,6 +62,16 @@
       const error = err as string;
       toast.rojo(`Error al conseguir meseros de base de datos: ${error}`);
     }
+
+    try{
+      const label = getCurrentWebviewWindow().label;
+      const ventana = await WebviewWindow.getByLabel(label);
+      await ventana?.show();
+    }catch(err){
+      const error = err as string;
+      toast.rojo(`Error al mostrar ventana: ${error}`);
+    }
+
   });
 
   function agregarFila() {

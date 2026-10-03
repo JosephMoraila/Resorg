@@ -22,7 +22,7 @@
         try{
             const params = {clave:valueWindow, valor: pedidoPendiente};
             await invoke("guardar_pedido_compartido", params);
-            new WebviewWindow(valueWindow, {...objVerOrdenTodo, center: true, visible: true});
+            new WebviewWindow(valueWindow, {...objVerOrdenTodo, center: true, visible: false});
             const paramEnfocarVentana = {label: valueWindow};
             invoke("enfocar_ventana", paramEnfocarVentana);
         }catch (error) {
@@ -43,7 +43,7 @@
         try{
             await invoke("guardar_pedidos_filtros_compartido", params);
             const objVerGraficos = {title: `Ver gráficos`, url: "/ver-graficos-ordenes", height: 800, width: 1200,};
-            new WebviewWindow(valueWindow, {...objVerGraficos, center: true, visible: true});
+            new WebviewWindow(valueWindow, {...objVerGraficos, center: true, visible: false});
             const paramEnfocarVentana = {label: valueWindow};
             invoke("enfocar_ventana", paramEnfocarVentana);
         }catch (error) {

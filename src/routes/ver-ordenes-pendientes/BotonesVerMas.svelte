@@ -48,7 +48,7 @@
         try{
             const params = {clave:valueWindow, valor: pedidoPendiente};
             await invoke("guardar_pedido_compartido", params);
-            new WebviewWindow(valueWindow, {...objVerOrdenTodo, center: true, visible: true});
+            new WebviewWindow(valueWindow, {...objVerOrdenTodo, center: true, visible: false});
             const paramEnfocarVentana = {label: valueWindow};
             invoke("enfocar_ventana", paramEnfocarVentana);
         }catch (error) {

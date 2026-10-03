@@ -58,6 +58,17 @@
     };
   }
 
+  async function onMostrarVentanaAlMontarse() {
+    try{
+        const label = getCurrentWebviewWindow().label;
+        const ventana = await WebviewWindow.getByLabel(label);
+        await ventana?.show();
+    }catch(err){
+        const error = err as string;
+        toast.rojo(`Error al mostrar ventana: ${error}`);
+    }
+  }
+
   onMount(() => {
     async function getCategories() {
       try {
@@ -79,9 +90,7 @@
         const err = error as string;
         toast.rojo(`Error al obtener información: ${err}`);
       }finally {
-        const label = getCurrentWebviewWindow().label;
-        const ventana = await WebviewWindow.getByLabel(label);
-        await ventana?.show();
+        await onMostrarVentanaAlMontarse();
       }
     }
     
