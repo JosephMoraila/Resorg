@@ -2,6 +2,9 @@
   import Menubar from "$lib/components/menubar/Menubar.svelte";
   import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
   import { invoke } from "@tauri-apps/api/core";
+  import { toast } from "$lib/toast.svelte";
+  import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+  import { onMount } from "svelte";
 
   function onRegistrarOrden(){
     const value = `registrar-orden-${crypto.randomUUID()}`;
@@ -26,6 +29,26 @@
     const paramEnfocarVentana = {label: value};
     invoke("enfocar_ventana", paramEnfocarVentana);
   }
+
+  async function onMostrarVentanaAlMontarse() {
+    try{
+        const label = getCurrentWebviewWindow().label;
+        const ventana = await WebviewWindow.getByLabel(label);
+        await ventana?.show();
+    }catch(err){
+        const error = err as string;
+        toast.rojo(`Error al mostrar ventana: ${error}`);
+    }
+  }
+
+  onMount(()=>{
+    try{
+      onMostrarVentanaAlMontarse();
+    }catch(err){
+      const error = err as string;
+      toast.rojo(`Error al mostrar ventana: ${error}`);
+    }
+  });
 
 </script>
 
